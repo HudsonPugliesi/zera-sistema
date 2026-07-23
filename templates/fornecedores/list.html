@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% set active_page = 'fornecedores' %}
+{% block title %}Fornecedores — Sistema Zera{% endblock %}
+{% block page_title %}Fornecedores{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <form method="GET" class="flex items-center gap-2">
+      <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Buscar por nome ou CNPJ..."
+             class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      <button type="submit" class="rounded-lg bg-gray-200 hover:bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Filtrar</button>
+    </form>
+    <a href="{{ url_for('fornecedores_novo') }}"
+       class="inline-flex items-center gap-2 bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">
+      + Novo Fornecedor
+    </a>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-500 text-left">
+        <tr>
+          <th class="px-5 py-3 font-medium">Razão Social</th>
+          <th class="px-5 py-3 font-medium">CNPJ/CPF</th>
+          <th class="px-5 py-3 font-medium">Contato</th>
+          <th class="px-5 py-3 font-medium">Telefone</th>
+          <th class="px-5 py-3 font-medium">E-mail</th>
+          <th class="px-5 py-3 font-medium">Status</th>
+          <th class="px-5 py-3 font-medium text-right">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for fornecedor in fornecedores %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-800 font-medium">{{ fornecedor.nome }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ fornecedor.documento }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ fornecedor.contato }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ fornecedor.telefone }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ fornecedor.email }}</td>
+          <td class="px-5 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium {% if fornecedor.status == 'ativo' %}bg-green-100 text-green-700{% else %}bg-gray-200 text-gray-600{% endif %}">
+              {{ fornecedor.status|capitalize }}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-right space-x-2 whitespace-nowrap">
+            <a href="{{ url_for('fornecedores_editar', id=fornecedor.id) }}" class="text-zera-600 hover:text-zera-800 font-medium">Editar</a>
+            <form method="POST" action="{{ url_for('fornecedores_excluir', id=fornecedor.id) }}" class="inline"
+                  onsubmit="return confirm('Excluir o fornecedor {{ fornecedor.nome }}?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+              <button type="submit" class="text-red-500 hover:text-red-700 font-medium">Excluir</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-5 py-8 text-center text-gray-400">Nenhum fornecedor cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "_pagination.html" ignore missing %}
+</div>
+{% endblock %}

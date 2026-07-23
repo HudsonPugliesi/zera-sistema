@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% set active_page = 'entrada de estoque' %}
+{% block title %}{{ 'Editar' if entrada and entrada.id else 'Nova' }} Entrada de Estoque{% endblock %}
+{% block page_title %}{{ 'Editar Entrada' if entrada and entrada.id else 'Nova Entrada de Estoque' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <form method="POST"
+        action="{{ url_for('estoque_entrada_editar', id=entrada.id) if entrada and entrada.id else url_for('estoque_entrada_nova') }}"
+        class="space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Produto</label>
+        <select name="produto_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="">Selecione um produto...</option>
+          {% for p in produtos if produtos is defined %}
+          <option value="{{ p.id }}" {% if entrada and entrada.produto_id == p.id %}selected{% endif %}>{{ p.codigo }} — {{ p.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Data da entrada</label>
+        <input type="date" name="data" value="{{ entrada.data if entrada else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Fornecedor</label>
+        <select name="fornecedor_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="">Selecione...</option>
+          {% for f in fornecedores if fornecedores is defined %}
+          <option value="{{ f.id }}" {% if entrada and entrada.fornecedor_id == f.id %}selected{% endif %}>{{ f.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nota fiscal</label>
+        <input type="text" name="nota_fiscal" value="{{ entrada.nota_fiscal if entrada else '' }}"
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
+        <input type="number" min="1" name="quantidade" value="{{ entrada.quantidade if entrada else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Valor unitário (R$)</label>
+        <input type="number" step="0.01" min="0" name="valor_unitario" value="{{ entrada.valor_unitario if entrada else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+        <input type="text" name="responsavel" value="{{ entrada.responsavel if entrada else '' }}"
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
+      <textarea name="observacao" rows="3"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">{{ entrada.observacao if entrada else '' }}</textarea>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <a href="{{ url_for('estoque_entrada_listar') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Cancelar</a>
+      <button type="submit" class="px-5 py-2 rounded-lg bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold">Salvar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

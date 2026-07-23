@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% set active_page = 'inscrição' %}
+{% block title %}{{ 'Editar' if inscricao and inscricao.id else 'Nova' }} Inscrição{% endblock %}
+{% block page_title %}{{ 'Editar Inscrição' if inscricao and inscricao.id else 'Nova Inscrição' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <form method="POST"
+        action="{{ url_for('inscricoes_editar', id=inscricao.id) if inscricao and inscricao.id else url_for('inscricoes_nova') }}"
+        class="space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Aluno</label>
+        <select name="aluno_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="">Selecione um aluno...</option>
+          {% for a in alunos if alunos is defined %}
+          <option value="{{ a.id }}" {% if inscricao and inscricao.aluno_id == a.id %}selected{% endif %}>{{ a.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Ano letivo</label>
+        <input type="text" name="ano_letivo" value="{{ inscricao.ano_letivo if inscricao else now.year }}" required placeholder="Ex: 2026"
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Data da inscrição</label>
+        <input type="date" name="data_inscricao" value="{{ inscricao.data_inscricao if inscricao else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Série</label>
+        <select name="serie" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="">Selecione a série...</option>
+          {% for s in series if series is defined %}
+          <option value="{{ s }}" {% if inscricao and inscricao.serie == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Turma</label>
+        <input type="text" name="turma" value="{{ inscricao.turma if inscricao else '' }}" placeholder="Ex: A, B, C..."
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Turno</label>
+        <select name="turno" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="">Selecione...</option>
+          <option value="manha" {% if inscricao and inscricao.turno == 'manha' %}selected{% endif %}>Manhã</option>
+          <option value="tarde" {% if inscricao and inscricao.turno == 'tarde' %}selected{% endif %}>Tarde</option>
+          <option value="noite" {% if inscricao and inscricao.turno == 'noite' %}selected{% endif %}>Noite</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <select name="status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="ativa" {% if inscricao and inscricao.status == 'ativa' %}selected{% endif %}>Ativa</option>
+          <option value="concluida" {% if inscricao and inscricao.status == 'concluida' %}selected{% endif %}>Concluída</option>
+          <option value="cancelada" {% if inscricao and inscricao.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
+      <textarea name="observacao" rows="3"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">{{ inscricao.observacao if inscricao else '' }}</textarea>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <a href="{{ url_for('inscricoes_listar') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Cancelar</a>
+      <button type="submit" class="px-5 py-2 rounded-lg bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold">Salvar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

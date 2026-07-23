@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Sistema Zera{% endblock %}</title>
+<script>
+  if (localStorage.getItem('zera-theme') === 'dark' ||
+      (!localStorage.getItem('zera-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+  }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          zera: {
+            50: '#eefdf5', 100: '#d6fae6', 200: '#aef2ce', 300: '#7ce6b1',
+            400: '#45d190', 500: '#1fb676', 600: '#14935f', 700: '#13744d',
+            800: '#135c40', 900: '#124b36', 950: '#062a1e'
+          }
+        }
+      }
+    }
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+
+  /* Tell the browser which scheme is active so native form controls
+     (selects, checkboxes, scrollbars) render with matching colors. */
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+
+  /* Dark mode retrofit: overrides the utility classes used across every
+     page template so content (cards, tables, forms) follows the toggle
+     without needing a dark: variant hand-added to each individual file. */
+  html.dark .bg-white { background-color: #1f2937 !important; }
+  html.dark .bg-gray-50 { background-color: #111827 !important; }
+  html.dark .bg-gray-100 { background-color: #1f2937 !important; }
+  html.dark .bg-gray-200 { background-color: #374151 !important; }
+  html.dark .hover\:bg-gray-50:hover { background-color: #263042 !important; }
+  html.dark .hover\:bg-gray-100:hover { background-color: #263042 !important; }
+  html.dark .hover\:bg-gray-300:hover { background-color: #4b5563 !important; }
+
+  html.dark .text-gray-800 { color: #f3f4f6 !important; }
+  html.dark .text-gray-700 { color: #e5e7eb !important; }
+  html.dark .text-gray-600 { color: #d1d5db !important; }
+  html.dark .text-gray-500 { color: #9ca3af !important; }
+  html.dark .text-gray-400 { color: #6b7280 !important; }
+
+  html.dark .border-gray-100,
+  html.dark .border-gray-200,
+  html.dark .border-gray-300,
+  html.dark .divide-gray-100 > * { border-color: #374151 !important; }
+
+  html.dark input,
+  html.dark select,
+  html.dark textarea {
+    background-color: #111827 !important;
+    color: #f3f4f6 !important;
+    border-color: #4b5563 !important;
+  }
+  html.dark input::placeholder,
+  html.dark textarea::placeholder { color: #6b7280 !important; }
+
+  /* Status badges: keep the same hue, darken the pastel background. */
+  html.dark .bg-green-100 { background-color: rgba(34,197,94,.15) !important; }
+  html.dark .text-green-700 { color: #4ade80 !important; }
+  html.dark .bg-red-100 { background-color: rgba(239,68,68,.15) !important; }
+  html.dark .text-red-700 { color: #f87171 !important; }
+  html.dark .text-red-600 { color: #f87171 !important; }
+  html.dark .bg-yellow-100 { background-color: rgba(234,179,8,.15) !important; }
+  html.dark .text-yellow-700 { color: #facc15 !important; }
+  html.dark .bg-blue-100 { background-color: rgba(59,130,246,.15) !important; }
+  html.dark .text-blue-700 { color: #60a5fa !important; }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-200 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+<div class="flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="hidden md:flex md:flex-col w-64 bg-zera-950 text-zera-50 shrink-0">
+    <div class="flex items-center gap-2 px-6 py-5 border-b border-zera-800">
+      <span class="w-8 h-8 rounded-lg bg-zera-500 flex items-center justify-center font-bold text-zera-950">Z</span>
+      <span class="text-lg font-semibold tracking-wide">Sistema Zera</span>
+    </div>
+    <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1 text-sm">
+      {% macro navlink(endpoint, label, icon) %}
+      <a href="{{ url_for(endpoint) if endpoint else '#' }}"
+         class="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                {% if active_page == label|lower %}bg-zera-800 text-white{% else %}text-zera-200 hover:bg-zera-900 hover:text-white{% endif %}">
+        <span class="w-5 text-center">{{ icon }}</span>
+        <span>{{ label }}</span>
+      </a>
+      {% endmacro %}
+
+      {{ navlink('dashboard', 'Dashboard', '📊') }}
+      {{ navlink('produtos_listar', 'Produtos', '📦') }}
+      {{ navlink('estoque_entrada_listar', 'Entrada de Estoque', '⬇️') }}
+      {{ navlink('estoque_saida_listar', 'Saída de Estoque', '⬆️') }}
+      {{ navlink('compras_listar', 'Nota Fiscal', '🛒') }}
+      {{ navlink('patrimonio_listar', 'Patrimônio', '🏷️') }}
+      {{ navlink('fornecedores_listar', 'Fornecedores', '🚚') }}
+      {{ navlink('funcionarios_listar', 'Funcionários', '👥') }}
+
+      <div class="pt-3 mt-3 border-t border-zera-800 text-xs uppercase tracking-wider text-zera-400 px-3">Escola</div>
+      {{ navlink('alunos_listar', 'Alunos', '🎓') }}
+      {{ navlink('inscricoes_listar', 'Inscrição', '📝') }}
+
+      <div class="pt-3 mt-3 border-t border-zera-800 text-xs uppercase tracking-wider text-zera-400 px-3">Administração</div>
+      {{ navlink('usuarios_listar', 'Usuários', '🔐') }}
+      {{ navlink('auditoria_listar', 'Auditoria', '🧾') }}
+    </nav>
+    <div class="px-3 py-4 border-t border-zera-800">
+      <a href="{{ url_for('logout') }}"
+         class="flex items-center gap-3 px-3 py-2 rounded-lg text-zera-200 hover:bg-red-900/40 hover:text-white transition-colors">
+        <span class="w-5 text-center">🚪</span>
+        <span>Sair</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="flex-1 flex flex-col min-w-0">
+
+    <!-- Topbar -->
+    <header class="flex items-center justify-between bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 px-4 md:px-6 py-3">
+      <div class="flex items-center gap-3">
+        <button class="md:hidden text-xl" onclick="document.getElementById('mobileSidebar').classList.toggle('hidden')">☰</button>
+        <h1 class="text-lg font-semibold text-gray-700 dark:text-gray-100">{% block page_title %}Dashboard{% endblock %}</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <button onclick="toggleTheme()" title="Alternar tema claro/escuro"
+                class="w-9 h-9 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <span class="dark:hidden">🌙</span>
+          <span class="hidden dark:inline">☀️</span>
+        </button>
+        <span class="hidden sm:inline text-sm text-gray-500 dark:text-gray-400">{{ current_user.nome if current_user is defined and current_user.is_authenticated else 'Visitante' }}</span>
+        <div class="w-9 h-9 rounded-full bg-zera-500 text-white flex items-center justify-center font-semibold text-sm">
+          {{ (current_user.nome[0] if current_user is defined and current_user.is_authenticated else 'V')|upper }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile sidebar -->
+    <div id="mobileSidebar" class="hidden md:hidden bg-zera-950 text-zera-50 px-4 py-3 space-y-1 text-sm">
+      <a href="{{ url_for('dashboard') }}" class="block py-1">📊 Dashboard</a>
+      <a href="{{ url_for('produtos_listar') }}" class="block py-1">📦 Produtos</a>
+      <a href="{{ url_for('estoque_entrada_listar') }}" class="block py-1">⬇️ Entrada de Estoque</a>
+      <a href="{{ url_for('estoque_saida_listar') }}" class="block py-1">⬆️ Saída de Estoque</a>
+      <a href="{{ url_for('compras_listar') }}" class="block py-1">🛒 Nota Fiscal</a>
+      <a href="{{ url_for('patrimonio_listar') }}" class="block py-1">🏷️ Patrimônio</a>
+      <a href="{{ url_for('fornecedores_listar') }}" class="block py-1">🚚 Fornecedores</a>
+      <a href="{{ url_for('funcionarios_listar') }}" class="block py-1">👥 Funcionários</a>
+      <a href="{{ url_for('alunos_listar') }}" class="block py-1">🎓 Alunos</a>
+      <a href="{{ url_for('inscricoes_listar') }}" class="block py-1">📝 Inscrição</a>
+      <a href="{{ url_for('usuarios_listar') }}" class="block py-1">🔐 Usuários</a>
+      <a href="{{ url_for('auditoria_listar') }}" class="block py-1">🧾 Auditoria</a>
+      <a href="{{ url_for('logout') }}" class="block py-1">🚪 Sair</a>
+    </div>
+
+    <!-- Flash messages -->
+    <div class="px-4 md:px-6 pt-4">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="mb-3 rounded-lg px-4 py-3 text-sm font-medium
+              {% if category == 'success' %}bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300
+              {% elif category == 'error' or category == 'danger' %}bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300
+              {% elif category == 'warning' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300
+              {% else %}bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <!-- Page content -->
+    <main class="flex-1 px-4 md:px-6 py-4">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="px-6 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">
+      Sistema Zera &copy; {{ now.year if now is defined else '' }} — Gestão de Estoque e Patrimônio
+    </footer>
+  </div>
+</div>
+
+  <script>
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('zera-theme', isDark ? 'dark' : 'light');
+    }
+
+    document.addEventListener('input', function (e) {
+      const el = e.target;
+      if (el.readOnly || el.disabled || el.hasAttribute('data-no-cap')) return;
+      const isTextField = el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && el.type === 'text');
+      if (!isTextField || el.value.length === 0) return;
+      const first = el.value.charAt(0);
+      const upper = first.toUpperCase();
+      if (first !== upper) {
+        const pos = el.selectionStart;
+        const posEnd = el.selectionEnd;
+        el.value = upper + el.value.slice(1);
+        el.setSelectionRange(pos, posEnd);
+      }
+    });
+
+    document.addEventListener('focusout', function (e) {
+      const el = e.target;
+      if (el.tagName === 'INPUT' && el.type === 'number' && el.step === '0.01' && el.value !== '') {
+        el.value = parseFloat(el.value).toFixed(2);
+      }
+    });
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

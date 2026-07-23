@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set active_page = 'usuários' %}
+{% block title %}{{ 'Editar' if usuario and usuario.id else 'Novo' }} Usuário{% endblock %}
+{% block page_title %}{{ 'Editar Usuário' if usuario and usuario.id else 'Novo Usuário' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <form method="POST"
+        action="{{ url_for('usuarios_editar', id=usuario.id) if usuario and usuario.id else url_for('usuarios_novo') }}"
+        class="space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
+        <input type="text" name="nome" value="{{ usuario.nome if usuario else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Usuário (login)</label>
+        <input type="text" name="login" value="{{ usuario.login if usuario else '' }}" required data-no-cap
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+        <input type="email" name="email" value="{{ usuario.email if usuario else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Senha {% if usuario and usuario.id %}<span class="text-gray-400 font-normal">(deixe em branco para não alterar)</span>{% endif %}
+        </label>
+        <input type="password" name="senha" {% if not (usuario and usuario.id) %}required{% endif %}
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Perfil de acesso</label>
+        <select name="perfil" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="operador" {% if usuario and usuario.perfil == 'operador' %}selected{% endif %}>Operador</option>
+          <option value="gerente" {% if usuario and usuario.perfil == 'gerente' %}selected{% endif %}>Gerente</option>
+          <option value="admin" {% if usuario and usuario.perfil == 'admin' %}selected{% endif %}>Administrador</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+        <select name="status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="ativo" {% if usuario and usuario.status == 'ativo' %}selected{% endif %}>Ativo</option>
+          <option value="bloqueado" {% if usuario and usuario.status == 'bloqueado' %}selected{% endif %}>Bloqueado</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <a href="{{ url_for('usuarios_listar') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Cancelar</a>
+      <button type="submit" class="px-5 py-2 rounded-lg bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold">Salvar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

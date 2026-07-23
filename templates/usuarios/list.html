@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set active_page = 'usuários' %}
+{% block title %}Usuários — Sistema Zera{% endblock %}
+{% block page_title %}Usuários do Sistema{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <form method="GET" class="flex flex-wrap items-center gap-2">
+      <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Buscar por nome ou usuário..."
+             class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      <select name="perfil" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        <option value="">Todos perfis</option>
+        <option value="admin">Administrador</option>
+        <option value="gerente">Gerente</option>
+        <option value="operador">Operador</option>
+      </select>
+      <button type="submit" class="rounded-lg bg-gray-200 hover:bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Filtrar</button>
+    </form>
+    <a href="{{ url_for('usuarios_novo') }}"
+       class="inline-flex items-center gap-2 bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">
+      + Novo Usuário
+    </a>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-500 text-left">
+        <tr>
+          <th class="px-5 py-3 font-medium">Nome</th>
+          <th class="px-5 py-3 font-medium">Usuário</th>
+          <th class="px-5 py-3 font-medium">E-mail</th>
+          <th class="px-5 py-3 font-medium">Perfil</th>
+          <th class="px-5 py-3 font-medium">Último acesso</th>
+          <th class="px-5 py-3 font-medium">Status</th>
+          <th class="px-5 py-3 font-medium text-right">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for usuario in usuarios %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-800 font-medium">{{ usuario.nome }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ usuario.login }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ usuario.email }}</td>
+          <td class="px-5 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium bg-zera-100 text-zera-700">{{ usuario.perfil|capitalize }}</span>
+          </td>
+          <td class="px-5 py-3 text-gray-600">{{ usuario.ultimo_acesso or '—' }}</td>
+          <td class="px-5 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium {% if usuario.status == 'ativo' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+              {{ usuario.status|capitalize }}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-right space-x-2 whitespace-nowrap">
+            <a href="{{ url_for('usuarios_editar', id=usuario.id) }}" class="text-zera-600 hover:text-zera-800 font-medium">Editar</a>
+            <form method="POST" action="{{ url_for('usuarios_excluir', id=usuario.id) }}" class="inline"
+                  onsubmit="return confirm('Excluir o usuário {{ usuario.nome }}?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+              <button type="submit" class="text-red-500 hover:text-red-700 font-medium">Excluir</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-5 py-8 text-center text-gray-400">Nenhum usuário cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "_pagination.html" ignore missing %}
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% set active_page = 'auditoria' %}
+{% block title %}Auditoria — Sistema Zera{% endblock %}
+{% block page_title %}Auditoria do Sistema{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <form method="GET" class="flex flex-wrap items-center gap-2">
+    <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Buscar por usuário ou descrição..."
+           class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+    <select name="modulo" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      <option value="">Todos módulos</option>
+      <option value="produtos">Produtos</option>
+      <option value="estoque">Estoque</option>
+      <option value="compras">Compras</option>
+      <option value="patrimonio">Patrimônio</option>
+      <option value="fornecedores">Fornecedores</option>
+      <option value="funcionarios">Funcionários</option>
+      <option value="usuarios">Usuários</option>
+    </select>
+    <select name="acao" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      <option value="">Todas ações</option>
+      <option value="criacao">Criação</option>
+      <option value="edicao">Edição</option>
+      <option value="exclusao">Exclusão</option>
+      <option value="login">Login</option>
+      <option value="logout">Logout</option>
+    </select>
+    <input type="date" name="data_inicio" value="{{ request.args.get('data_inicio', '') }}"
+           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+    <input type="date" name="data_fim" value="{{ request.args.get('data_fim', '') }}"
+           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+    <button type="submit" class="rounded-lg bg-gray-200 hover:bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Filtrar</button>
+    <a href="{{ url_for('auditoria_exportar', **request.args) }}"
+       class="ml-auto rounded-lg border border-gray-300 hover:bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">
+      ⬇ Exportar CSV
+    </a>
+  </form>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-500 text-left">
+        <tr>
+          <th class="px-5 py-3 font-medium">Data/Hora</th>
+          <th class="px-5 py-3 font-medium">Usuário</th>
+          <th class="px-5 py-3 font-medium">Ação</th>
+          <th class="px-5 py-3 font-medium">Módulo</th>
+          <th class="px-5 py-3 font-medium">Descrição</th>
+          <th class="px-5 py-3 font-medium">Endereço IP</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for log in logs %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3 text-gray-600 whitespace-nowrap">{{ log.data_hora }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">{{ log.usuario }}</td>
+          <td class="px-5 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium
+              {% if log.acao == 'criacao' %}bg-green-100 text-green-700
+              {% elif log.acao == 'edicao' %}bg-blue-100 text-blue-700
+              {% elif log.acao == 'exclusao' %}bg-red-100 text-red-700
+              {% else %}bg-gray-200 text-gray-600{% endif %}">
+              {{ log.acao|capitalize }}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-gray-600">{{ log.modulo|capitalize }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ log.descricao }}</td>
+          <td class="px-5 py-3 text-gray-400">{{ log.ip }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="px-5 py-8 text-center text-gray-400">Nenhum registro de auditoria encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "_pagination.html" ignore missing %}
+</div>
+{% endblock %}

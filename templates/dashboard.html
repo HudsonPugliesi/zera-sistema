@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% set active_page = 'dashboard' %}
+{% block title %}Dashboard — Sistema Zera{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Cards de métricas -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Produtos cadastrados</p>
+          <p class="text-2xl font-bold text-gray-800 mt-1">{{ total_produtos if total_produtos is defined else 0 }}</p>
+        </div>
+        <span class="w-11 h-11 rounded-lg bg-zera-100 text-zera-700 flex items-center justify-center text-xl">📦</span>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Itens com estoque baixo</p>
+          <p class="text-2xl font-bold text-red-600 mt-1">{{ total_estoque_baixo if total_estoque_baixo is defined else 0 }}</p>
+        </div>
+        <span class="w-11 h-11 rounded-lg bg-red-100 text-red-700 flex items-center justify-center text-xl">⚠️</span>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Compras registradas</p>
+          <p class="text-2xl font-bold text-gray-800 mt-1">{{ total_compras if total_compras is defined else 0 }}</p>
+        </div>
+        <span class="w-11 h-11 rounded-lg bg-yellow-100 text-yellow-700 flex items-center justify-center text-xl">🛒</span>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Bens patrimoniais</p>
+          <p class="text-2xl font-bold text-gray-800 mt-1">{{ total_patrimonio if total_patrimonio is defined else 0 }}</p>
+        </div>
+        <span class="w-11 h-11 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xl">🏷️</span>
+      </div>
+    </div>
+  </div>
+  <!--
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+     Atividades recentes / auditoria 
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-700">Atividades recentes</h2>
+        <a href="{{ url_for('auditoria_listar') }}" class="text-sm text-zera-600 hover:text-zera-700 font-medium">Ver auditoria completa</a>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 text-left">
+          <tr>
+            <th class="px-5 py-2 font-medium">Data/Hora</th>
+            <th class="px-5 py-2 font-medium">Usuário</th>
+            <th class="px-5 py-2 font-medium">Ação</th>
+            <th class="px-5 py-2 font-medium">Módulo</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for log in atividades_recentes if atividades_recentes is defined %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-2.5 text-gray-600">{{ log.data_hora }}</td>
+            <td class="px-5 py-2.5 text-gray-600">{{ log.usuario }}</td>
+            <td class="px-5 py-2.5 text-gray-600">{{ log.acao }}</td>
+            <td class="px-5 py-2.5 text-gray-600">{{ log.modulo }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="px-5 py-6 text-center text-gray-400">Nenhuma atividade registrada.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    -->
+
+    <!-- Alertas de estoque baixo 
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-700">Alertas de estoque</h2>
+      </div>
+      <ul class="divide-y divide-gray-100">
+        {% for produto in produtos_estoque_baixo if produtos_estoque_baixo is defined %}
+        <li class="px-5 py-3 flex items-center justify-between text-sm">
+          <div>
+            <p class="text-gray-700 font-medium">{{ produto.nome }}</p>
+            <p class="text-gray-400 text-xs">Mínimo: {{ produto.estoque_minimo }}</p>
+          </div>
+          <span class="text-red-600 font-semibold">{{ produto.quantidade }}</span>
+        </li>
+        {% else %}
+        <li class="px-5 py-6 text-center text-gray-400 text-sm">Nenhum alerta no momento.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    -->
+  </div>
+-->  
+</div>
+{% endblock %}

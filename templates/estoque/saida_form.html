@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% set active_page = 'saída de estoque' %}
+{% block title %}{{ 'Editar' if saida and saida.id else 'Nova' }} Saída de Estoque{% endblock %}
+{% block page_title %}{{ 'Editar Saída' if saida and saida.id else 'Nova Saída de Estoque' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <form method="POST"
+        action="{{ url_for('estoque_saida_editar', id=saida.id) if saida and saida.id else url_for('estoque_saida_nova') }}"
+        class="space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div class="sm:col-span-2">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Produto</label>
+        <select name="produto_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="">Selecione um produto...</option>
+          {% for p in produtos if produtos is defined %}
+          <option value="{{ p.id }}" {% if saida and saida.produto_id == p.id %}selected{% endif %}>{{ p.codigo }} — {{ p.nome }} (estoque: {{ p.quantidade }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Data da saída</label>
+        <input type="date" name="data" value="{{ saida.data if saida else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
+        <input type="number" min="1" name="quantidade" value="{{ saida.quantidade if saida else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Destino / Setor</label>
+        <input type="text" name="destino" value="{{ saida.destino if saida else '' }}"
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Motivo</label>
+        <select name="motivo" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="venda" {% if saida and saida.motivo == 'venda' %}selected{% endif %}>Venda</option>
+          <option value="uso_interno" {% if saida and saida.motivo == 'uso_interno' %}selected{% endif %}>Uso interno</option>
+          <option value="perda" {% if saida and saida.motivo == 'perda' %}selected{% endif %}>Perda/avaria</option>
+          <option value="devolucao" {% if saida and saida.motivo == 'devolucao' %}selected{% endif %}>Devolução</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+        <input type="text" name="responsavel" value="{{ saida.responsavel if saida else '' }}"
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
+      <textarea name="observacao" rows="3"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">{{ saida.observacao if saida else '' }}</textarea>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <a href="{{ url_for('estoque_saida_listar') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Cancelar</a>
+      <button type="submit" class="px-5 py-2 rounded-lg bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold">Salvar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

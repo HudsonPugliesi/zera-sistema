@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% set active_page = 'nota fiscal' %}
+{% block title %}{{ 'Editar' if compra and compra.id else 'Nova' }} Compra — Sistema Zera{% endblock %}
+{% block page_title %}{{ 'Editar Compra' if compra and compra.id else 'Nova Compra' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <form method="POST"
+        action="{{ url_for('compras_editar', id=compra.id) if compra and compra.id else url_for('compras_nova') }}"
+        class="space-y-6">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Número da Nota</label>
+        <input type="text" name="numero_nota" value="{{ compra.numero_nota if compra else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Fornecedor</label>
+        <select name="fornecedor_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="">Selecione...</option>
+          {% for f in fornecedores if fornecedores is defined %}
+          <option value="{{ f.id }}" {% if compra and compra.fornecedor_id == f.id %}selected{% endif %}>{{ f.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Data de emissão da nota fiscal</label>
+        <input type="date" name="data_emissao" value="{{ compra.data_emissao if compra else '' }}" required
+               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      </div>
+    </div>
+
+    <!-- Itens da compra -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-sm font-medium text-gray-700">Itens da compra</label>
+        <button type="button" onclick="adicionarItem()" class="text-sm font-medium text-zera-600 hover:text-zera-700">+ Adicionar item</button>
+      </div>
+      <div class="border border-gray-200 rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 text-left">
+            <tr>
+              <th class="px-3 py-2 font-medium">Produto</th>
+              <th class="px-3 py-2 font-medium w-24">Qtd.</th>
+              <th class="px-3 py-2 font-medium w-32">Valor Unit. (R$)</th>
+              <th class="px-3 py-2 font-medium w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="itensCompra" class="divide-y divide-gray-100">
+            {% for item in compra.itens if compra and compra.itens %}
+            <tr>
+              <td class="px-3 py-2">
+                <select name="item_produto_id[]" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+                  {% for p in produtos if produtos is defined %}
+                  <option value="{{ p.id }}" {% if item.produto_id == p.id %}selected{% endif %}>{{ p.nome }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td class="px-3 py-2"><input type="number" min="1" name="item_quantidade[]" value="{{ item.quantidade }}" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></td>
+              <td class="px-3 py-2"><input type="number" step="0.01" min="0" name="item_valor_unitario[]" value="{{ item.valor_unitario }}" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></td>
+              <td class="px-3 py-2 text-center"><button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700">✕</button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Duplicatas -->
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-sm font-medium text-gray-700">Duplicatas</label>
+        <button type="button" onclick="adicionarDuplicata()" class="text-sm font-medium text-zera-600 hover:text-zera-700">+ Adicionar duplicata</button>
+      </div>
+      <div class="border border-gray-200 rounded-lg overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 text-left">
+            <tr>
+              <th class="px-3 py-2 font-medium w-40">Valor (R$)</th>
+              <th class="px-3 py-2 font-medium w-40">Data de vencimento</th>
+              <th class="px-3 py-2 font-medium w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="duplicatasCompra" class="divide-y divide-gray-100">
+            {% for duplicata in compra.duplicatas if compra and compra.duplicatas %}
+            <tr>
+              <td class="px-3 py-2"><input type="number" step="0.01" min="0" name="duplicata_valor[]" value="{{ duplicata.valor }}" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></td>
+              <td class="px-3 py-2"><input type="date" name="duplicata_vencimento[]" value="{{ duplicata.data_vencimento }}" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></td>
+              <td class="px-3 py-2 text-center"><button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700">✕</button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+      <textarea name="observacao" rows="3"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">{{ compra.observacao if compra else '' }}</textarea>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <a href="{{ url_for('compras_listar') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Cancelar</a>
+      <button type="submit" class="px-5 py-2 rounded-lg bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold">Salvar</button>
+    </div>
+  </form>
+</div>
+
+<template id="templateItem">
+  <tr>
+    <td class="px-3 py-2">
+      <select name="item_produto_id[]" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+        {% for p in produtos if produtos is defined %}
+        <option value="{{ p.id }}">{{ p.nome }}</option>
+        {% endfor %}
+      </select>
+    </td>
+    <td class="px-3 py-2"><input type="number" min="1" name="item_quantidade[]" value="1" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></td>
+    <td class="px-3 py-2"><input type="number" step="0.01" min="0" name="item_valor_unitario[]" value="0.00" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></td>
+    <td class="px-3 py-2 text-center"><button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700">✕</button></td>
+  </tr>
+</template>
+
+<template id="templateDuplicata">
+  <tr>
+    <td class="px-3 py-2"><input type="number" step="0.01" min="0" name="duplicata_valor[]" value="0.00" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></td>
+    <td class="px-3 py-2"><input type="date" name="duplicata_vencimento[]" class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm"></td>
+    <td class="px-3 py-2 text-center"><button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700">✕</button></td>
+  </tr>
+</template>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function adicionarItem() {
+    const template = document.getElementById('templateItem');
+    const clone = template.content.cloneNode(true);
+    document.getElementById('itensCompra').appendChild(clone);
+  }
+
+  function adicionarDuplicata() {
+    const template = document.getElementById('templateDuplicata');
+    const clone = template.content.cloneNode(true);
+    document.getElementById('duplicatasCompra').appendChild(clone);
+  }
+</script>
+{% endblock %}

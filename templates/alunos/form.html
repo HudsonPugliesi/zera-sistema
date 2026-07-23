@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% set active_page = 'alunos' %}
+{% block title %}{{ 'Editar' if aluno and aluno.id else 'Novo' }} Aluno{% endblock %}
+{% block page_title %}{{ 'Editar Aluno' if aluno and aluno.id else 'Novo Aluno' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <form method="POST"
+        action="{{ url_for('alunos_editar', id=aluno.id) if aluno and aluno.id else url_for('alunos_novo') }}"
+        class="space-y-6">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+    <div>
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Dados do aluno</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nome completo</label>
+          <input type="text" name="nome" value="{{ aluno.nome if aluno else '' }}" required
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Data de nascimento</label>
+          <input type="date" name="data_nascimento" value="{{ aluno.data_nascimento if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+          <select name="sexo" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+            <option value="">Selecione...</option>
+            <option value="masculino" {% if aluno and aluno.sexo == 'masculino' %}selected{% endif %}>Masculino</option>
+            <option value="feminino" {% if aluno and aluno.sexo == 'feminino' %}selected{% endif %}>Feminino</option>
+            <option value="outro" {% if aluno and aluno.sexo == 'outro' %}selected{% endif %}>Outro</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+          <input type="text" name="cpf" value="{{ aluno.cpf if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">RG</label>
+          <input type="text" name="rg" value="{{ aluno.rg if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Série</label>
+          <select name="serie" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+            <option value="">Selecione a série...</option>
+            {% for s in series if series is defined %}
+            <option value="{{ s }}" {% if aluno and aluno.serie == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Turma</label>
+          <input type="text" name="turma" value="{{ aluno.turma if aluno else '' }}" placeholder="Ex: A, B, C..."
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Turno</label>
+          <select name="turno" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+            <option value="">Selecione...</option>
+            <option value="manha" {% if aluno and aluno.turno == 'manha' %}selected{% endif %}>Manhã</option>
+            <option value="tarde" {% if aluno and aluno.turno == 'tarde' %}selected{% endif %}>Tarde</option>
+            <option value="noite" {% if aluno and aluno.turno == 'noite' %}selected{% endif %}>Noite</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Data de matrícula</label>
+          <input type="date" name="data_matricula" value="{{ aluno.data_matricula if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select name="status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+            <option value="ativo" {% if aluno and aluno.status == 'ativo' %}selected{% endif %}>Ativo</option>
+            <option value="inativo" {% if aluno and aluno.status == 'inativo' %}selected{% endif %}>Inativo</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+          <input type="text" name="telefone" value="{{ aluno.telefone if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+          <input type="email" name="email" value="{{ aluno.email if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
+          <input type="text" name="endereco" value="{{ aluno.endereco if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+      </div>
+    </div>
+
+    <div class="pt-4 border-t border-gray-100">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Responsável</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nome do responsável</label>
+          <input type="text" name="responsavel_nome" value="{{ aluno.responsavel_nome if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Parentesco</label>
+          <input type="text" name="responsavel_parentesco" value="{{ aluno.responsavel_parentesco if aluno else '' }}" placeholder="Ex: Mãe, Pai, Avó..."
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Telefone do responsável</label>
+          <input type="text" name="responsavel_telefone" value="{{ aluno.responsavel_telefone if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">E-mail do responsável</label>
+          <input type="email" name="responsavel_email" value="{{ aluno.responsavel_email if aluno else '' }}"
+                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Observação</label>
+      <textarea name="observacao" rows="3"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">{{ aluno.observacao if aluno else '' }}</textarea>
+    </div>
+
+    <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <a href="{{ url_for('alunos_listar') }}" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100">Cancelar</a>
+      <button type="submit" class="px-5 py-2 rounded-lg bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold">Salvar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
