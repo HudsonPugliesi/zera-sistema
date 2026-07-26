@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
@@ -239,6 +239,40 @@ class Inscricao(db.Model):
     @property
     def aluno_nome(self):
         return self.aluno.nome if self.aluno else ""
+
+
+class CategoriaFinanceira(db.Model):
+    __tablename__ = "categorias_financeiras"
+
+    id = db.Column(db.Integer, primary_key=True)
+    tipo = db.Column(db.String(10), nullable=False)  # receita | despesa
+    natureza = db.Column(db.String(10), nullable=False)  # fixa | variavel
+    nome = db.Column(db.String(150), nullable=False)
+
+
+class LancamentoFinanceiro(db.Model):
+    __tablename__ = "lancamentos_financeiros"
+
+    id = db.Column(db.Integer, primary_key=True)
+    tipo = db.Column(db.String(10), nullable=False)  # receita | despesa
+    natureza = db.Column(db.String(10), nullable=False)  # fixa | variavel
+    categoria = db.Column(db.String(150), nullable=False)
+    descricao = db.Column(db.String(255))
+    valor = db.Column(db.Float, nullable=False, default=0)
+    data_vencimento = db.Column(db.Date, nullable=False)
+    data_pagamento = db.Column(db.Date, nullable=True)
+
+    @property
+    def status(self):
+        if self.data_pagamento:
+            return "Recebido" if self.tipo == "receita" else "Pago"
+        if self.data_vencimento < date.today():
+            return "Atrasado"
+        return "Pendente"
+
+    @property
+    def data_referencia(self):
+        return self.data_pagamento or self.data_vencimento
 
 
 class Auditoria(db.Model):

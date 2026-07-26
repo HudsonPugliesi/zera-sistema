@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active_page = 'home' %}
+{% block title %}Zéra Christian School{% endblock %}
+{% block page_title %}Zéra Christian School{% endblock %}
+
+{% block extra_head %}
+<style>
+  #headerLeft { flex: 1; }
+  #pageTitle { width: 100%; text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center py-12">
+  <div id="zeraLogoCard" class="bg-white rounded-2xl shadow-xl px-10 py-12 md:px-16 md:py-16" style="transition: transform 0.1s linear;">
+    <img src="{{ url_for('static', filename='img/zera-logo-color.png') }}"
+         alt="Zéra Christian School"
+         class="w-full max-w-md md:max-w-lg">
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    var card = document.getElementById('zeraLogoCard');
+    var ticking = false;
+
+    function updatePosition() {
+      var y = window.scrollY || window.pageYOffset;
+      card.style.transform = 'translateY(' + (y * 0.25) + 'px)';
+      ticking = false;
+    }
+
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        window.requestAnimationFrame(updatePosition);
+        ticking = true;
+      }
+    });
+
+    updatePosition();
+  })();
+</script>
+{% endblock %}

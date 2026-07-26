@@ -10,6 +10,7 @@ from flask_wtf import CSRFProtect
 from models import (
     Aluno,
     Auditoria,
+    CategoriaFinanceira,
     Compra,
     CompraItem,
     Duplicata,
@@ -18,6 +19,7 @@ from models import (
     Fornecedor,
     Funcionario,
     Inscricao,
+    LancamentoFinanceiro,
     Patrimonio,
     Produto,
     SERIES_CHOICES,
@@ -57,6 +59,14 @@ def parse_date(value):
     return datetime.strptime(value, "%Y-%m-%d").date() if value else None
 
 
+@app.template_filter("brl")
+def format_brl(value):
+    if not value:
+        return "-"
+    texto = f"{abs(value):,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+    return f"(R${texto})" if value < 0 else f"R${texto}"
+
+
 def registrar_auditoria(acao, modulo, descricao):
     usuario_nome = current_user.nome if current_user.is_authenticated else "Sistema"
     log = Auditoria(
@@ -78,7 +88,7 @@ def registrar_auditoria(acao, modulo, descricao):
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("home"))
     if request.method == "POST":
         login_input = request.form.get("usuario", "").strip()
         senha = request.form.get("senha", "")
@@ -91,7 +101,7 @@ def login():
             db.session.commit()
             registrar_auditoria("login", "usuarios", f"Login realizado por {usuario.nome}")
             flash(f"Bem-vindo(a), {usuario.nome}!", "success")
-            return redirect(url_for("dashboard"))
+            return redirect(url_for("home"))
         flash("Usuário ou senha inválidos.", "error")
     return render_template("login.html")
 
@@ -106,32 +116,229 @@ def logout():
 
 
 # ---------------------------------------------------------------------------
-# Dashboard
+# Home
 # ---------------------------------------------------------------------------
 
 @app.route("/")
 @login_required
+def home():
+    return render_template("home.html")
+
+
+# ---------------------------------------------------------------------------
+# Dashboard financeiro
+# ---------------------------------------------------------------------------
+
+MESES_ABREV = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+
+
+def _anos_disponiveis():
+    anos = {datetime.now().year}
+    for (d,) in db.session.query(LancamentoFinanceiro.data_vencimento):
+        anos.add(d.year)
+    for (d,) in db.session.query(Compra.data_emissao):
+        anos.add(d.year)
+    for (d,) in db.session.query(EstoqueEntrada.data):
+        anos.add(d.year)
+    for (d,) in db.session.query(Patrimonio.data_aquisicao).filter(Patrimonio.data_aquisicao.isnot(None)):
+        anos.add(d.year)
+    return sorted(anos, reverse=True)
+
+
+@app.route("/dashboard")
+@login_required
 def dashboard():
-    total_produtos = Produto.query.count()
-    total_estoque_baixo = Produto.query.filter(Produto.quantidade <= Produto.estoque_minimo).count()
-    total_compras = Compra.query.count()
-    total_patrimonio = Patrimonio.query.count()
-    atividades_recentes = Auditoria.query.order_by(Auditoria.data_hora.desc()).limit(10).all()
-    produtos_estoque_baixo = (
-        Produto.query.filter(Produto.quantidade <= Produto.estoque_minimo)
-        .order_by(Produto.quantidade)
-        .limit(5)
-        .all()
-    )
+    ano = request.args.get("ano", datetime.now().year, type=int)
+
+    receitas_mes = [0.0] * 12
+    despesas_mes = [0.0] * 12
+
+    for lancamento in LancamentoFinanceiro.query.all():
+        ref = lancamento.data_referencia
+        if ref.year != ano:
+            continue
+        if lancamento.tipo == "receita":
+            receitas_mes[ref.month - 1] += lancamento.valor
+        else:
+            despesas_mes[ref.month - 1] += lancamento.valor
+
+    # Despesas automáticas: Compras, Entradas de Estoque e Patrimônio adquirido.
+    for (data_emissao, valor_total) in db.session.query(Compra.data_emissao, Compra.valor_total):
+        if data_emissao.year == ano:
+            despesas_mes[data_emissao.month - 1] += valor_total or 0
+
+    for (data, valor_total) in db.session.query(EstoqueEntrada.data, EstoqueEntrada.valor_total):
+        if data.year == ano:
+            despesas_mes[data.month - 1] += valor_total or 0
+
+    for (data_aquisicao, valor) in db.session.query(Patrimonio.data_aquisicao, Patrimonio.valor):
+        if data_aquisicao and data_aquisicao.year == ano:
+            despesas_mes[data_aquisicao.month - 1] += valor or 0
+
+    resumo_mensal = []
+    saldo_acumulado = 0.0
+    for i, mes in enumerate(MESES_ABREV):
+        saldo_mes = receitas_mes[i] - despesas_mes[i]
+        saldo_acumulado += saldo_mes
+        resumo_mensal.append(
+            {
+                "mes": mes,
+                "receitas": receitas_mes[i],
+                "despesas": despesas_mes[i],
+                "saldo_mes": saldo_mes,
+                "saldo_acumulado": saldo_acumulado,
+            }
+        )
+
+    total_receitas = sum(receitas_mes)
+    total_despesas = sum(despesas_mes)
     return render_template(
         "dashboard.html",
-        total_produtos=total_produtos,
-        total_estoque_baixo=total_estoque_baixo,
-        total_compras=total_compras,
-        total_patrimonio=total_patrimonio,
-        atividades_recentes=atividades_recentes,
-        produtos_estoque_baixo=produtos_estoque_baixo,
+        ano=ano,
+        anos_disponiveis=_anos_disponiveis(),
+        total_receitas=total_receitas,
+        total_despesas=total_despesas,
+        saldo_do_ano=total_receitas - total_despesas,
+        saldo_acumulado_final=saldo_acumulado,
+        resumo_mensal=resumo_mensal,
     )
+
+
+# ---------------------------------------------------------------------------
+# Lançamentos Financeiros
+# ---------------------------------------------------------------------------
+
+def _categorias_financeiras_json():
+    categorias = CategoriaFinanceira.query.order_by(CategoriaFinanceira.nome).all()
+    return [{"nome": c.nome, "tipo": c.tipo, "natureza": c.natureza} for c in categorias]
+
+
+@app.route("/financeiro/lancamentos")
+@login_required
+def lancamentos_listar():
+    q = request.args.get("q", "").strip()
+    tipo = request.args.get("tipo", "").strip()
+    natureza = request.args.get("natureza", "").strip()
+    data_inicio = request.args.get("data_inicio", "")
+    data_fim = request.args.get("data_fim", "")
+    page = request.args.get("page", 1, type=int)
+
+    query = LancamentoFinanceiro.query
+    if q:
+        like = f"%{q}%"
+        query = query.filter(db.or_(LancamentoFinanceiro.categoria.ilike(like), LancamentoFinanceiro.descricao.ilike(like)))
+    if tipo:
+        query = query.filter(LancamentoFinanceiro.tipo == tipo)
+    if natureza:
+        query = query.filter(LancamentoFinanceiro.natureza == natureza)
+    if data_inicio:
+        query = query.filter(LancamentoFinanceiro.data_vencimento >= parse_date(data_inicio))
+    if data_fim:
+        query = query.filter(LancamentoFinanceiro.data_vencimento <= parse_date(data_fim))
+
+    pagination = query.order_by(LancamentoFinanceiro.data_vencimento.desc()).paginate(
+        page=page, per_page=PER_PAGE, error_out=False
+    )
+    return render_template("lancamentos/list.html", lancamentos=pagination.items, pagination=pagination)
+
+
+@app.route("/financeiro/lancamentos/novo", methods=["GET", "POST"])
+@login_required
+def lancamentos_novo():
+    if request.method == "POST":
+        lancamento = LancamentoFinanceiro(
+            tipo=request.form["tipo"],
+            natureza=request.form["natureza"],
+            categoria=request.form["categoria"].strip(),
+            descricao=request.form.get("descricao", "").strip(),
+            valor=float(request.form.get("valor") or 0),
+            data_vencimento=parse_date(request.form["data_vencimento"]),
+            data_pagamento=parse_date(request.form.get("data_pagamento")),
+        )
+        db.session.add(lancamento)
+        db.session.commit()
+        registrar_auditoria(
+            "criacao", "financeiro", f"Lançamento de {lancamento.tipo} ({lancamento.categoria}) cadastrado"
+        )
+        flash("Lançamento cadastrado com sucesso.", "success")
+        return redirect(url_for("lancamentos_listar"))
+    return render_template("lancamentos/form.html", lancamento=None, categorias=_categorias_financeiras_json())
+
+
+@app.route("/financeiro/lancamentos/<int:id>/editar", methods=["GET", "POST"])
+@login_required
+def lancamentos_editar(id):
+    lancamento = db.get_or_404(LancamentoFinanceiro, id)
+    if request.method == "POST":
+        lancamento.tipo = request.form["tipo"]
+        lancamento.natureza = request.form["natureza"]
+        lancamento.categoria = request.form["categoria"].strip()
+        lancamento.descricao = request.form.get("descricao", "").strip()
+        lancamento.valor = float(request.form.get("valor") or 0)
+        lancamento.data_vencimento = parse_date(request.form["data_vencimento"])
+        lancamento.data_pagamento = parse_date(request.form.get("data_pagamento"))
+        db.session.commit()
+        registrar_auditoria("edicao", "financeiro", f"Lançamento #{lancamento.id} atualizado")
+        flash("Lançamento atualizado com sucesso.", "success")
+        return redirect(url_for("lancamentos_listar"))
+    return render_template("lancamentos/form.html", lancamento=lancamento, categorias=_categorias_financeiras_json())
+
+
+@app.route("/financeiro/lancamentos/<int:id>/excluir", methods=["POST"])
+@login_required
+def lancamentos_excluir(id):
+    lancamento = db.get_or_404(LancamentoFinanceiro, id)
+    descricao = f"{lancamento.tipo} ({lancamento.categoria})"
+    db.session.delete(lancamento)
+    db.session.commit()
+    registrar_auditoria("exclusao", "financeiro", f"Lançamento {descricao} excluído")
+    flash("Lançamento excluído.", "success")
+    return redirect(url_for("lancamentos_listar"))
+
+
+# ---------------------------------------------------------------------------
+# Categorias Financeiras
+# ---------------------------------------------------------------------------
+
+@app.route("/financeiro/categorias")
+@login_required
+def categorias_financeiras_listar():
+    categorias = CategoriaFinanceira.query.order_by(CategoriaFinanceira.nome).all()
+    grupos = {
+        ("receita", "fixa"): [],
+        ("receita", "variavel"): [],
+        ("despesa", "fixa"): [],
+        ("despesa", "variavel"): [],
+    }
+    for categoria in categorias:
+        grupos[(categoria.tipo, categoria.natureza)].append(categoria)
+    return render_template("categorias_financeiras/list.html", grupos=grupos)
+
+
+@app.route("/financeiro/categorias/nova", methods=["POST"])
+@login_required
+def categorias_financeiras_nova():
+    nome = request.form.get("nome", "").strip()
+    tipo = request.form.get("tipo")
+    natureza = request.form.get("natureza")
+    if nome and tipo and natureza:
+        db.session.add(CategoriaFinanceira(tipo=tipo, natureza=natureza, nome=nome))
+        db.session.commit()
+        registrar_auditoria("criacao", "financeiro", f"Categoria {nome} ({tipo}/{natureza}) cadastrada")
+        flash("Categoria cadastrada com sucesso.", "success")
+    return redirect(url_for("categorias_financeiras_listar"))
+
+
+@app.route("/financeiro/categorias/<int:id>/excluir", methods=["POST"])
+@login_required
+def categorias_financeiras_excluir(id):
+    categoria = db.get_or_404(CategoriaFinanceira, id)
+    nome = categoria.nome
+    db.session.delete(categoria)
+    db.session.commit()
+    registrar_auditoria("exclusao", "financeiro", f"Categoria {nome} excluída")
+    flash("Categoria excluída.", "success")
+    return redirect(url_for("categorias_financeiras_listar"))
 
 
 # ---------------------------------------------------------------------------
@@ -1081,9 +1288,78 @@ def seed_admin():
         db.session.commit()
 
 
+# Mesmas listas da aba "Categorias" da planilha de fluxo de caixa escolar.
+CATEGORIAS_FINANCEIRAS_PADRAO = {
+    ("receita", "fixa"): [
+        "Mensalidades - Educação Infantil",
+        "Mensalidades - Fundamental I",
+        "Mensalidade Contraturno",
+        "Diária Contraturno",
+        "Taxa de Matrícula",
+        "Taxa de Materias",
+        "Uniformes",
+        "Ballet",
+    ],
+    ("receita", "variavel"): [
+        "Eventos e Festas Escolares",
+        "Passeios e Excursões",
+        "Colônia de Férias",
+        "Cursos e Atividades Extracurriculares",
+        "Multas e Juros por Atraso",
+        "Segunda Via de Documentos",
+        "Aluguel de Espaço/Quadra",
+        "Doações e Patrocínios",
+    ],
+    ("despesa", "fixa"): [
+        "Folha de Pagamento - Professores",
+        "Folha de Pagamento - Coordenação/Direção",
+        "Folha de Pagamento - Administrativo/Apoio",
+        "Encargos Trabalhistas (INSS/FGTS)",
+        "Aluguel do Imóvel + IPTU",
+        "Folha de Pagamento - Auxiliar de Desenvolvimento/Estágio",
+        "Água e Esgoto",
+        "Energia Elétrica",
+        "Internet e Telefonia",
+        "Clip Escola",
+        "Mídias Digitais e Design",
+        "Ifood Benefícios",
+        "Controle de Pragas",
+        "Honorários Contábeis",
+        "Little Kickers",
+    ],
+    ("despesa", "variavel"): [
+        "Material Didático e Pedagógico",
+        "Material de Limpeza e Higiene",
+        "Material de Escritório",
+        "Alimentação Contraturno",
+        "Manutenção e Reparos Prediais",
+        "Eventos e Festas Escolares",
+        "Passeios e Excursões",
+        "Marketing e Publicidade",
+        "Capacitação e Formação de Professores",
+        "Uniformes e Brindes",
+        "Brinquedos e Material Pedagógico (Infantil)",
+        "Despesas Jurídicas e Cartoriais",
+        "Impostos e Taxas Municipais",
+        "Serviços de Terceiros/Freelancers",
+        "Equipamentos - Patrimônio",
+        "Água mineral",
+    ],
+}
+
+
+def seed_categorias_financeiras():
+    if CategoriaFinanceira.query.count() == 0:
+        for (tipo, natureza), nomes in CATEGORIAS_FINANCEIRAS_PADRAO.items():
+            for nome in nomes:
+                db.session.add(CategoriaFinanceira(tipo=tipo, natureza=natureza, nome=nome))
+        db.session.commit()
+
+
 with app.app_context():
     db.create_all()
     seed_admin()
+    seed_categorias_financeiras()
 
 
 if __name__ == "__main__":

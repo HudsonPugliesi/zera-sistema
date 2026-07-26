@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% set active_page = 'lançamentos' %}
+{% block title %}Lançamentos Financeiros — Zéra Christian School{% endblock %}
+{% block page_title %}Lançamentos Financeiros{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <form method="GET" class="flex flex-wrap items-center gap-2">
+    <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Buscar por categoria ou descrição..."
+           class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+    <select name="tipo" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      <option value="">Todos os tipos</option>
+      <option value="receita" {% if request.args.get('tipo') == 'receita' %}selected{% endif %}>Receita</option>
+      <option value="despesa" {% if request.args.get('tipo') == 'despesa' %}selected{% endif %}>Despesa</option>
+    </select>
+    <select name="natureza" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      <option value="">Todas as naturezas</option>
+      <option value="fixa" {% if request.args.get('natureza') == 'fixa' %}selected{% endif %}>Fixa</option>
+      <option value="variavel" {% if request.args.get('natureza') == 'variavel' %}selected{% endif %}>Variável</option>
+    </select>
+    <input type="date" name="data_inicio" value="{{ request.args.get('data_inicio', '') }}"
+           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+    <input type="date" name="data_fim" value="{{ request.args.get('data_fim', '') }}"
+           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+    <button type="submit" class="rounded-lg bg-gray-200 hover:bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Filtrar</button>
+    <a href="{{ url_for('lancamentos_novo') }}"
+       class="ml-auto inline-flex items-center gap-2 bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">
+      + Novo Lançamento
+    </a>
+  </form>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-500 text-left">
+        <tr>
+          <th class="px-5 py-3 font-medium">Tipo</th>
+          <th class="px-5 py-3 font-medium">Categoria</th>
+          <th class="px-5 py-3 font-medium">Descrição</th>
+          <th class="px-5 py-3 font-medium text-right">Valor</th>
+          <th class="px-5 py-3 font-medium">Vencimento</th>
+          <th class="px-5 py-3 font-medium">Status</th>
+          <th class="px-5 py-3 font-medium text-right">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for lancamento in lancamentos %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-5 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium {% if lancamento.tipo == 'receita' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+              {{ 'Receita' if lancamento.tipo == 'receita' else 'Despesa' }}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-gray-800 font-medium">{{ lancamento.categoria }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ lancamento.descricao }}</td>
+          <td class="px-5 py-3 text-right text-gray-600">{{ lancamento.valor|brl }}</td>
+          <td class="px-5 py-3 text-gray-600 whitespace-nowrap">{{ lancamento.data_vencimento }}</td>
+          <td class="px-5 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium
+              {% if lancamento.status in ('Pago', 'Recebido') %}bg-green-100 text-green-700
+              {% elif lancamento.status == 'Atrasado' %}bg-red-100 text-red-700
+              {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+              {{ lancamento.status }}
+            </span>
+          </td>
+          <td class="px-5 py-3 text-right space-x-2 whitespace-nowrap">
+            <a href="{{ url_for('lancamentos_editar', id=lancamento.id) }}" class="text-zera-600 hover:text-zera-800 font-medium">Editar</a>
+            <form method="POST" action="{{ url_for('lancamentos_excluir', id=lancamento.id) }}" class="inline"
+                  onsubmit="return confirm('Excluir este lançamento?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+              <button type="submit" class="text-red-500 hover:text-red-700 font-medium">Excluir</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="px-5 py-8 text-center text-gray-400">Nenhum lançamento cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "_pagination.html" ignore missing %}
+</div>
+{% endblock %}

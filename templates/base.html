@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Sistema Zera{% endblock %}</title>
+<link rel="icon" href="{{ url_for('static', filename='img/zera-favicon.png') }}" type="image/png">
+<title>{% block title %}Zéra Christian School{% endblock %}</title>
 <script>
   if (localStorage.getItem('zera-theme') === 'dark' ||
       (!localStorage.getItem('zera-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -87,9 +88,8 @@
 
   <!-- Sidebar -->
   <aside class="hidden md:flex md:flex-col w-64 bg-zera-950 text-zera-50 shrink-0">
-    <div class="flex items-center gap-2 px-6 py-5 border-b border-zera-800">
-      <span class="w-8 h-8 rounded-lg bg-zera-500 flex items-center justify-center font-bold text-zera-950">Z</span>
-      <span class="text-lg font-semibold tracking-wide">Sistema Zera</span>
+    <div class="flex items-center justify-center px-6 py-4 border-b border-zera-800">
+      <img src="{{ url_for('static', filename='img/zera-logo.png') }}" alt="Zéra Christian School" class="w-24 h-auto">
     </div>
     <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1 text-sm">
       {% macro navlink(endpoint, label, icon) %}
@@ -101,7 +101,13 @@
       </a>
       {% endmacro %}
 
+      {{ navlink('home', 'Home', '🏠') }}
       {{ navlink('dashboard', 'Dashboard', '📊') }}
+
+      <div class="pt-3 mt-3 border-t border-zera-800 text-xs uppercase tracking-wider text-zera-400 px-3">Financeiro</div>
+      {{ navlink('lancamentos_listar', 'Lançamentos', '💰') }}
+      {{ navlink('categorias_financeiras_listar', 'Categorias', '🏷️') }}
+
       {{ navlink('produtos_listar', 'Produtos', '📦') }}
       {{ navlink('estoque_entrada_listar', 'Entrada de Estoque', '⬇️') }}
       {{ navlink('estoque_saida_listar', 'Saída de Estoque', '⬆️') }}
@@ -132,9 +138,9 @@
 
     <!-- Topbar -->
     <header class="flex items-center justify-between bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 px-4 md:px-6 py-3">
-      <div class="flex items-center gap-3">
+      <div id="headerLeft" class="flex items-center gap-3">
         <button class="md:hidden text-xl" onclick="document.getElementById('mobileSidebar').classList.toggle('hidden')">☰</button>
-        <h1 class="text-lg font-semibold text-gray-700 dark:text-gray-100">{% block page_title %}Dashboard{% endblock %}</h1>
+        <h1 id="pageTitle" class="text-lg font-semibold text-gray-700 dark:text-gray-100">{% block page_title %}Dashboard{% endblock %}</h1>
       </div>
       <div class="flex items-center gap-4">
         <button onclick="toggleTheme()" title="Alternar tema claro/escuro"
@@ -151,7 +157,10 @@
 
     <!-- Mobile sidebar -->
     <div id="mobileSidebar" class="hidden md:hidden bg-zera-950 text-zera-50 px-4 py-3 space-y-1 text-sm">
+      <a href="{{ url_for('home') }}" class="block py-1">🏠 Home</a>
       <a href="{{ url_for('dashboard') }}" class="block py-1">📊 Dashboard</a>
+      <a href="{{ url_for('lancamentos_listar') }}" class="block py-1">💰 Lançamentos</a>
+      <a href="{{ url_for('categorias_financeiras_listar') }}" class="block py-1">🏷️ Categorias</a>
       <a href="{{ url_for('produtos_listar') }}" class="block py-1">📦 Produtos</a>
       <a href="{{ url_for('estoque_entrada_listar') }}" class="block py-1">⬇️ Entrada de Estoque</a>
       <a href="{{ url_for('estoque_saida_listar') }}" class="block py-1">⬆️ Saída de Estoque</a>
@@ -189,7 +198,7 @@
     </main>
 
     <footer class="px-6 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">
-      Sistema Zera &copy; {{ now.year if now is defined else '' }} — Gestão de Estoque e Patrimônio
+      Zéra Christian School &copy; {{ now.year if now is defined else '' }} — Gestão de Estoque e Patrimônio
     </footer>
   </div>
 </div>
@@ -220,6 +229,22 @@
       if (el.tagName === 'INPUT' && el.type === 'number' && el.step === '0.01' && el.value !== '') {
         el.value = parseFloat(el.value).toFixed(2);
       }
+    });
+
+    document.addEventListener('input', function (e) {
+      const el = e.target;
+      if (el.tagName !== 'INPUT' || el.type !== 'tel') return;
+      let v = el.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length > 10) {
+        v = v.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3');
+      } else if (v.length > 6) {
+        v = v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+      } else if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d{0,5}).*/, '($1) $2');
+      } else if (v.length > 0) {
+        v = v.replace(/^(\d{0,2}).*/, '($1');
+      }
+      el.value = v;
     });
   </script>
   {% block extra_scripts %}{% endblock %}

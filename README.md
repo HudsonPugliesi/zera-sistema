@@ -1,8 +1,9 @@
 # Sistema Zera — Instruções de Uso
 
-Sistema completo de gestão de estoque e patrimônio: produtos, entrada/saída de
-estoque, compras, patrimônio, fornecedores, funcionários, usuários e
-auditoria. Backend em Flask com SQLAlchemy (SQLite) e login via Flask-Login.
+Sistema completo de gestão escolar: dashboard financeiro, lançamentos de
+receitas/despesas, produtos, entrada/saída de estoque, compras, patrimônio,
+fornecedores, funcionários, alunos, usuários e auditoria. Backend em Flask
+com SQLAlchemy (SQLite) e login via Flask-Login.
 
 1. Crie e ative um ambiente virtual (recomendado):
 
@@ -31,3 +32,6 @@ gerado:
 - **Senha:** `admin123`
 
 Troque essa senha em Usuários assim que possível.
+
+Para aprender a usar cada tela do sistema (financeiro, estoque,
+patrimônio, alunos, usuários etc.), veja o [Manual do Sistema](MANUAL.md).
