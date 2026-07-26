@@ -30,9 +30,14 @@ from models import (
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PER_PAGE = 15
 
+# Na Vercel o sistema de arquivos do projeto é somente leitura; só /tmp aceita
+# escrita, e não é persistente entre cold starts. Fora da Vercel, o banco
+# continua salvo normalmente ao lado do código.
+DB_PATH = "/tmp/zera.db" if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "zera.db")
+
 app = Flask(__name__, template_folder="templates")
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(BASE_DIR, "zera.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)

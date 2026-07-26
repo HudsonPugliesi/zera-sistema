@@ -35,3 +35,14 @@ Troque essa senha em Usuários assim que possível.
 
 Para aprender a usar cada tela do sistema (financeiro, estoque,
 patrimônio, alunos, usuários etc.), veja o [Manual do Sistema](MANUAL.md).
+
+## Deploy na Vercel
+
+O projeto já inclui `vercel.json` para deploy direto (basta importar o
+repositório na Vercel). **Atenção:** a Vercel roda o Flask como função
+serverless com sistema de arquivos somente leitura — o banco SQLite é
+gravado em `/tmp`, que **não é persistente**: os dados cadastrados podem
+ser perdidos a qualquer redeploy, cold start ou nova instância. Isso serve
+para demonstrar a interface, não para uso real da escola. Para uso real,
+migre para um banco externo (Postgres) e ajuste `SQLALCHEMY_DATABASE_URI`
+em `app.py`.
