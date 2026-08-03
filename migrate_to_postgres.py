@@ -24,6 +24,8 @@ import sys
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
+from db_url import normalizar_postgres_url
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
@@ -37,8 +39,6 @@ def get_postgres_url():
     if not url:
         print("Erro: informe a URL do Postgres como argumento ou defina DATABASE_URL no .env")
         sys.exit(1)
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
     return url
 
 
@@ -47,12 +47,12 @@ def main():
         print(f"Banco SQLite não encontrado em {SQLITE_PATH}")
         sys.exit(1)
 
-    postgres_url = get_postgres_url()
+    postgres_url, engine_options = normalizar_postgres_url(get_postgres_url())
 
     import models  # importa depois de garantir que o .env já foi carregado
 
     sqlite_engine = create_engine("sqlite:///" + SQLITE_PATH)
-    postgres_engine = create_engine(postgres_url)
+    postgres_engine = create_engine(postgres_url, **engine_options)
 
     print("Criando tabelas no Postgres...")
     models.db.metadata.create_all(postgres_engine)

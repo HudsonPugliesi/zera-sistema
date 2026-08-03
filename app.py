@@ -9,6 +9,7 @@ from flask import Flask, Response, flash, redirect, render_template, request, ur
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from flask_wtf import CSRFProtect
 
+from db_url import normalizar_postgres_url
 from models import (
     Aluno,
     Auditoria,
@@ -52,12 +53,9 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # leitura e /tmp não é persistente entre cold starts, então rodar lá sem
 # DATABASE_URL configurada perde os dados a cada novo deploy/cold start.
 _database_url = os.environ.get("DATABASE_URL")
+_engine_options = {}
 if _database_url:
-    # Alguns provedores (Heroku, Render) ainda entregam o prefixo antigo
-    # "postgres://", que o SQLAlchemy 1.4+ não aceita mais.
-    if _database_url.startswith("postgres://"):
-        _database_url = _database_url.replace("postgres://", "postgresql://", 1)
-    DB_URI = _database_url
+    DB_URI, _engine_options = normalizar_postgres_url(_database_url)
 else:
     DB_PATH = "/tmp/zera.db" if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "zera.db")
     DB_URI = "sqlite:///" + DB_PATH
@@ -67,6 +65,7 @@ app = Flask(__name__, template_folder="templates")
 # definida, gera uma chave temporária só para a sessão atual do processo.
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = _engine_options
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)

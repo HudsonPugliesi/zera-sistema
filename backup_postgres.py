@@ -16,6 +16,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
+from db_url import normalizar_postgres_url
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKUP_DIR = os.path.join(BASE_DIR, "backups")
 KEEP_ULTIMOS = 30
@@ -35,7 +37,8 @@ def backup():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     destino = os.path.join(BACKUP_DIR, f"zera_postgres_{timestamp}.db")
 
-    postgres_engine = create_engine(database_url)
+    postgres_url, engine_options = normalizar_postgres_url(database_url)
+    postgres_engine = create_engine(postgres_url, **engine_options)
     sqlite_engine = create_engine("sqlite:///" + destino)
 
     models.db.metadata.create_all(sqlite_engine)
