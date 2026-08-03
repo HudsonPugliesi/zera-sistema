@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Só para rodar o servidor local com HTTPS (USE_HTTPS=true no .env).
+# Não é usada em produção (Vercel já termina TLS antes de chegar na função).
+pyopenssl>=24.0
