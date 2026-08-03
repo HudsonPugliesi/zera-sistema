@@ -1,0 +1,12 @@
+{% set _report_args = request.args.to_dict() %}
+{% set _ = _report_args.update({'relatorio': 1}) %}
+{% set _back_args = request.args.to_dict() %}
+{% set _ = _back_args.pop('relatorio', None) %}
+{% if pagination is not defined or pagination is none %}
+<button type="button" onclick="window.print()" class="rounded-lg bg-gray-700 hover:bg-gray-800 text-white text-sm font-medium px-4 py-2">🖨️ Imprimir</button>
+<a href="{{ url_for(request.endpoint, **_back_args) }}"
+   class="rounded-lg bg-gray-200 hover:bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700">← Voltar</a>
+{% else %}
+<a href="{{ url_for(request.endpoint, **_report_args) }}"
+   class="rounded-lg bg-gray-200 hover:bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700">🖨️ Relatório completo</a>
+{% endif %}

@@ -80,6 +80,16 @@
   html.dark .text-yellow-700 { color: #facc15 !important; }
   html.dark .bg-blue-100 { background-color: rgba(59,130,246,.15) !important; }
   html.dark .text-blue-700 { color: #60a5fa !important; }
+
+  /* Impressão de relatórios: some sidebar, topbar, rodapé e qualquer
+     controle marcado como .no-print; deixa só o conteúdo do relatório. */
+  @media print {
+    aside, header, footer, .no-print { display: none !important; }
+    body { background: white !important; }
+    main { padding: 0 !important; }
+    .shadow-sm { box-shadow: none !important; }
+    table { font-size: 11px; }
+  }
 </style>
 {% block extra_head %}{% endblock %}
 </head>
@@ -194,6 +204,14 @@
 
     <!-- Page content -->
     <main class="flex-1 px-4 md:px-6 py-4">
+      <div class="hidden print:block mb-4 pb-3 border-b border-gray-300">
+        <img src="{{ url_for('static', filename='img/zera-logo.png') }}" alt="Zéra Christian School" class="w-20 h-auto mb-2">
+        <h1 class="text-lg font-bold text-gray-900">{{ self.page_title() }}</h1>
+        <p class="text-xs text-gray-500">
+          Relatório gerado em {{ now.strftime('%d/%m/%Y às %H:%M') if now is defined else '' }}
+          {% if current_user is defined and current_user.is_authenticated %}por {{ current_user.nome }}{% endif %}
+        </p>
+      </div>
       {% block content %}{% endblock %}
     </main>
 

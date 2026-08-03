@@ -28,8 +28,12 @@
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Departamento</label>
-        <input type="text" name="departamento" value="{{ funcionario.departamento if funcionario else '' }}"
-               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+        <select name="departamento" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="">Selecione...</option>
+          <option value="Núcleo Pedagógico" {% if funcionario and funcionario.departamento == 'Núcleo Pedagógico' %}selected{% endif %}>Núcleo Pedagógico</option>
+          <option value="Núcleo Administrativo" {% if funcionario and funcionario.departamento == 'Núcleo Administrativo' %}selected{% endif %}>Núcleo Administrativo</option>
+          <option value="Núcleo Operacional" {% if funcionario and funcionario.departamento == 'Núcleo Operacional' %}selected{% endif %}>Núcleo Operacional</option>
+        </select>
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Data de admissão</label>

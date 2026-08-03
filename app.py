@@ -1,8 +1,10 @@
 import csv
 import io
 import os
+import secrets
 from datetime import datetime, timedelta
 
+from dotenv import load_dotenv
 from flask import Flask, Response, flash, redirect, render_template, request, url_for
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from flask_wtf import CSRFProtect
@@ -30,14 +32,41 @@ from models import (
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PER_PAGE = 15
 
-# Na Vercel o sistema de arquivos do projeto é somente leitura; só /tmp aceita
-# escrita, e não é persistente entre cold starts. Fora da Vercel, o banco
-# continua salvo normalmente ao lado do código.
-DB_PATH = "/tmp/zera.db" if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "zera.db")
+
+def paginar_ou_todos(query, order_by=None):
+    """Pagina a query normalmente, mas se ?relatorio=1 estiver na URL retorna
+    todos os registros de uma vez (sem paginação), para o relatório completo."""
+    if order_by is not None:
+        query = query.order_by(order_by)
+    if request.args.get("relatorio") == "1":
+        return query.all(), None
+    page = request.args.get("page", 1, type=int)
+    pagination = query.paginate(page=page, per_page=PER_PAGE, error_out=False)
+    return pagination.items, pagination
+
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+# Se DATABASE_URL estiver definida (Postgres, ex: Neon/Vercel Postgres), usa
+# esse banco. Caso contrário, cai para SQLite local — útil em dev sem precisar
+# de um Postgres rodando. Na Vercel o sistema de arquivos do projeto é somente
+# leitura e /tmp não é persistente entre cold starts, então rodar lá sem
+# DATABASE_URL configurada perde os dados a cada novo deploy/cold start.
+_database_url = os.environ.get("DATABASE_URL")
+if _database_url:
+    # Alguns provedores (Heroku, Render) ainda entregam o prefixo antigo
+    # "postgres://", que o SQLAlchemy 1.4+ não aceita mais.
+    if _database_url.startswith("postgres://"):
+        _database_url = _database_url.replace("postgres://", "postgresql://", 1)
+    DB_URI = _database_url
+else:
+    DB_PATH = "/tmp/zera.db" if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "zera.db")
+    DB_URI = "sqlite:///" + DB_PATH
 
 app = Flask(__name__, template_folder="templates")
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
+# SECRET_KEY vem do arquivo .env (fora do código-fonte). Se não estiver
+# definida, gera uma chave temporária só para a sessão atual do processo.
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
@@ -226,7 +255,6 @@ def lancamentos_listar():
     natureza = request.args.get("natureza", "").strip()
     data_inicio = request.args.get("data_inicio", "")
     data_fim = request.args.get("data_fim", "")
-    page = request.args.get("page", 1, type=int)
 
     query = LancamentoFinanceiro.query
     if q:
@@ -241,10 +269,8 @@ def lancamentos_listar():
     if data_fim:
         query = query.filter(LancamentoFinanceiro.data_vencimento <= parse_date(data_fim))
 
-    pagination = query.order_by(LancamentoFinanceiro.data_vencimento.desc()).paginate(
-        page=page, per_page=PER_PAGE, error_out=False
-    )
-    return render_template("lancamentos/list.html", lancamentos=pagination.items, pagination=pagination)
+    lancamentos, pagination = paginar_ou_todos(query, LancamentoFinanceiro.data_vencimento.desc())
+    return render_template("lancamentos/list.html", lancamentos=lancamentos, pagination=pagination)
 
 
 @app.route("/financeiro/lancamentos/novo", methods=["GET", "POST"])
@@ -355,7 +381,6 @@ def categorias_financeiras_excluir(id):
 def produtos_listar():
     q = request.args.get("q", "").strip()
     categoria = request.args.get("categoria", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = Produto.query
     if q:
@@ -364,10 +389,10 @@ def produtos_listar():
     if categoria:
         query = query.filter(Produto.categoria == categoria)
 
-    pagination = query.order_by(Produto.nome).paginate(page=page, per_page=PER_PAGE, error_out=False)
+    produtos, pagination = paginar_ou_todos(query, Produto.nome)
     categorias = [c[0] for c in db.session.query(Produto.categoria).distinct() if c[0]]
     return render_template(
-        "produtos/list.html", produtos=pagination.items, pagination=pagination, categorias=categorias
+        "produtos/list.html", produtos=produtos, pagination=pagination, categorias=categorias
     )
 
 
@@ -453,7 +478,6 @@ def estoque_entrada_listar():
     q = request.args.get("q", "").strip()
     data_inicio = request.args.get("data_inicio", "")
     data_fim = request.args.get("data_fim", "")
-    page = request.args.get("page", 1, type=int)
 
     query = EstoqueEntrada.query.join(Produto)
     if q:
@@ -463,8 +487,8 @@ def estoque_entrada_listar():
     if data_fim:
         query = query.filter(EstoqueEntrada.data <= parse_date(data_fim))
 
-    pagination = query.order_by(EstoqueEntrada.data.desc()).paginate(page=page, per_page=PER_PAGE, error_out=False)
-    return render_template("estoque/entrada_list.html", entradas=pagination.items, pagination=pagination)
+    entradas, pagination = paginar_ou_todos(query, EstoqueEntrada.data.desc())
+    return render_template("estoque/entrada_list.html", entradas=entradas, pagination=pagination)
 
 
 @app.route("/estoque/entrada/nova", methods=["GET", "POST"])
@@ -550,7 +574,6 @@ def estoque_entrada_excluir(id):
 def estoque_saida_listar():
     q = request.args.get("q", "").strip()
     motivo = request.args.get("motivo", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = EstoqueSaida.query.join(Produto)
     if q:
@@ -558,8 +581,8 @@ def estoque_saida_listar():
     if motivo:
         query = query.filter(EstoqueSaida.motivo == motivo)
 
-    pagination = query.order_by(EstoqueSaida.data.desc()).paginate(page=page, per_page=PER_PAGE, error_out=False)
-    return render_template("estoque/saida_list.html", saidas=pagination.items, pagination=pagination)
+    saidas, pagination = paginar_ou_todos(query, EstoqueSaida.data.desc())
+    return render_template("estoque/saida_list.html", saidas=saidas, pagination=pagination)
 
 
 @app.route("/estoque/saida/nova", methods=["GET", "POST"])
@@ -663,15 +686,14 @@ def _aplicar_duplicatas_compra(compra, form):
 @login_required
 def compras_listar():
     q = request.args.get("q", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = Compra.query.join(Fornecedor)
     if q:
         like = f"%{q}%"
         query = query.filter(db.or_(Compra.numero_nota.ilike(like), Fornecedor.nome.ilike(like)))
 
-    pagination = query.order_by(Compra.data_emissao.desc()).paginate(page=page, per_page=PER_PAGE, error_out=False)
-    return render_template("compras/list.html", compras=pagination.items, pagination=pagination)
+    compras, pagination = paginar_ou_todos(query, Compra.data_emissao.desc())
+    return render_template("compras/list.html", compras=compras, pagination=pagination)
 
 
 @app.route("/compras/nova", methods=["GET", "POST"])
@@ -737,7 +759,6 @@ def compras_excluir(id):
 def patrimonio_listar():
     q = request.args.get("q", "").strip()
     status = request.args.get("status", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = Patrimonio.query
     if q:
@@ -746,8 +767,8 @@ def patrimonio_listar():
     if status:
         query = query.filter(Patrimonio.status == status)
 
-    pagination = query.order_by(Patrimonio.codigo).paginate(page=page, per_page=PER_PAGE, error_out=False)
-    return render_template("patrimonio/list.html", patrimonios=pagination.items, pagination=pagination)
+    patrimonios, pagination = paginar_ou_todos(query, Patrimonio.codigo)
+    return render_template("patrimonio/list.html", patrimonios=patrimonios, pagination=pagination)
 
 
 @app.route("/patrimonio/novo", methods=["GET", "POST"])
@@ -818,15 +839,14 @@ def patrimonio_excluir(id):
 @login_required
 def fornecedores_listar():
     q = request.args.get("q", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = Fornecedor.query
     if q:
         like = f"%{q}%"
         query = query.filter(db.or_(Fornecedor.nome.ilike(like), Fornecedor.documento.ilike(like)))
 
-    pagination = query.order_by(Fornecedor.nome).paginate(page=page, per_page=PER_PAGE, error_out=False)
-    return render_template("fornecedores/list.html", fornecedores=pagination.items, pagination=pagination)
+    fornecedores, pagination = paginar_ou_todos(query, Fornecedor.nome)
+    return render_template("fornecedores/list.html", fornecedores=fornecedores, pagination=pagination)
 
 
 @app.route("/fornecedores/novo", methods=["GET", "POST"])
@@ -894,7 +914,6 @@ def fornecedores_excluir(id):
 def funcionarios_listar():
     q = request.args.get("q", "").strip()
     departamento = request.args.get("departamento", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = Funcionario.query
     if q:
@@ -903,10 +922,10 @@ def funcionarios_listar():
     if departamento:
         query = query.filter(Funcionario.departamento == departamento)
 
-    pagination = query.order_by(Funcionario.nome).paginate(page=page, per_page=PER_PAGE, error_out=False)
+    funcionarios, pagination = paginar_ou_todos(query, Funcionario.nome)
     departamentos = [d[0] for d in db.session.query(Funcionario.departamento).distinct() if d[0]]
     return render_template(
-        "funcionarios/list.html", funcionarios=pagination.items, pagination=pagination, departamentos=departamentos
+        "funcionarios/list.html", funcionarios=funcionarios, pagination=pagination, departamentos=departamentos
     )
 
 
@@ -975,7 +994,6 @@ def funcionarios_excluir(id):
 def alunos_listar():
     q = request.args.get("q", "").strip()
     serie = request.args.get("serie", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = Aluno.query
     if q:
@@ -984,9 +1002,9 @@ def alunos_listar():
     if serie:
         query = query.filter(Aluno.serie == serie)
 
-    pagination = query.order_by(Aluno.nome).paginate(page=page, per_page=PER_PAGE, error_out=False)
+    alunos, pagination = paginar_ou_todos(query, Aluno.nome)
     return render_template(
-        "alunos/list.html", alunos=pagination.items, pagination=pagination, series=SERIES_CHOICES
+        "alunos/list.html", alunos=alunos, pagination=pagination, series=SERIES_CHOICES
     )
 
 
@@ -1010,6 +1028,10 @@ def alunos_novo():
             responsavel_parentesco=request.form.get("responsavel_parentesco", "").strip(),
             responsavel_telefone=request.form.get("responsavel_telefone", "").strip(),
             responsavel_email=request.form.get("responsavel_email", "").strip(),
+            responsavel_financeiro_nome=request.form.get("responsavel_financeiro_nome", "").strip(),
+            responsavel_financeiro_parentesco=request.form.get("responsavel_financeiro_parentesco", "").strip(),
+            responsavel_financeiro_telefone=request.form.get("responsavel_financeiro_telefone", "").strip(),
+            responsavel_financeiro_email=request.form.get("responsavel_financeiro_email", "").strip(),
             data_matricula=parse_date(request.form.get("data_matricula")) or datetime.now().date(),
             status=request.form.get("status", "ativo"),
             observacao=request.form.get("observacao", ""),
@@ -1042,6 +1064,10 @@ def alunos_editar(id):
         aluno.responsavel_parentesco = request.form.get("responsavel_parentesco", "").strip()
         aluno.responsavel_telefone = request.form.get("responsavel_telefone", "").strip()
         aluno.responsavel_email = request.form.get("responsavel_email", "").strip()
+        aluno.responsavel_financeiro_nome = request.form.get("responsavel_financeiro_nome", "").strip()
+        aluno.responsavel_financeiro_parentesco = request.form.get("responsavel_financeiro_parentesco", "").strip()
+        aluno.responsavel_financeiro_telefone = request.form.get("responsavel_financeiro_telefone", "").strip()
+        aluno.responsavel_financeiro_email = request.form.get("responsavel_financeiro_email", "").strip()
         aluno.data_matricula = parse_date(request.form.get("data_matricula"))
         aluno.status = request.form.get("status", "ativo")
         aluno.observacao = request.form.get("observacao", "")
@@ -1074,7 +1100,6 @@ def inscricoes_listar():
     q = request.args.get("q", "").strip()
     ano_letivo = request.args.get("ano_letivo", "").strip()
     status = request.args.get("status", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = Inscricao.query.join(Aluno)
     if q:
@@ -1084,12 +1109,10 @@ def inscricoes_listar():
     if status:
         query = query.filter(Inscricao.status == status)
 
-    pagination = query.order_by(Inscricao.data_inscricao.desc()).paginate(
-        page=page, per_page=PER_PAGE, error_out=False
-    )
+    inscricoes, pagination = paginar_ou_todos(query, Inscricao.data_inscricao.desc())
     anos_letivos = [a[0] for a in db.session.query(Inscricao.ano_letivo).distinct() if a[0]]
     return render_template(
-        "inscricoes/list.html", inscricoes=pagination.items, pagination=pagination, anos_letivos=anos_letivos
+        "inscricoes/list.html", inscricoes=inscricoes, pagination=pagination, anos_letivos=anos_letivos
     )
 
 
@@ -1159,7 +1182,6 @@ def inscricoes_excluir(id):
 def usuarios_listar():
     q = request.args.get("q", "").strip()
     perfil = request.args.get("perfil", "").strip()
-    page = request.args.get("page", 1, type=int)
 
     query = Usuario.query
     if q:
@@ -1168,8 +1190,8 @@ def usuarios_listar():
     if perfil:
         query = query.filter(Usuario.perfil == perfil)
 
-    pagination = query.order_by(Usuario.nome).paginate(page=page, per_page=PER_PAGE, error_out=False)
-    return render_template("usuarios/list.html", usuarios=pagination.items, pagination=pagination)
+    usuarios, pagination = paginar_ou_todos(query, Usuario.nome)
+    return render_template("usuarios/list.html", usuarios=usuarios, pagination=pagination)
 
 
 @app.route("/usuarios/novo", methods=["GET", "POST"])
@@ -1256,13 +1278,8 @@ def _query_auditoria(args):
 @app.route("/auditoria")
 @login_required
 def auditoria_listar():
-    page = request.args.get("page", 1, type=int)
-    pagination = (
-        _query_auditoria(request.args)
-        .order_by(Auditoria.data_hora.desc())
-        .paginate(page=page, per_page=PER_PAGE, error_out=False)
-    )
-    return render_template("auditoria/list.html", logs=pagination.items, pagination=pagination)
+    logs, pagination = paginar_ou_todos(_query_auditoria(request.args), Auditoria.data_hora.desc())
+    return render_template("auditoria/list.html", logs=logs, pagination=pagination)
 
 
 @app.route("/auditoria/exportar")
@@ -1368,4 +1385,9 @@ with app.app_context():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    use_https = os.environ.get("USE_HTTPS", "false").lower() == "true"
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = int(os.environ.get("PORT", 5000))
+    ssl_context = "adhoc" if use_https else None
+    app.run(debug=debug, host=host, port=port, ssl_context=ssl_context)
