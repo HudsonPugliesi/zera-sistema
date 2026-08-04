@@ -8,13 +8,23 @@
   <div class="text-white text-center font-semibold py-2 {{ cor }}">{{ titulo }}</div>
   <ul class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
     {% for c in itens %}
-    <li class="px-4 py-2 flex items-center justify-between text-sm">
-      <span class="text-gray-700" {% if c.criado_por %}title="Cadastrado por {{ c.criado_por }}{% if c.criado_em %} em {{ c.criado_em.strftime('%d/%m/%Y às %H:%M') }}{% endif %}"{% endif %}>{{ c.nome }}</span>
-      <form method="POST" action="{{ url_for('categorias_financeiras_excluir', id=c.id) }}" class="no-print"
-            onsubmit="return confirm('Remover a categoria {{ c.nome }}?');">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
-        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Remover</button>
-      </form>
+    <li class="px-4 py-2 text-sm">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-gray-700 truncate" {% if c.criado_por %}title="Cadastrado por {{ c.criado_por }}{% if c.criado_em %} em {{ c.criado_em.strftime('%d/%m/%Y às %H:%M') }}{% endif %}"{% endif %}>{{ c.nome }}</span>
+        <form method="POST" action="{{ url_for('categorias_financeiras_excluir', id=c.id) }}" class="no-print shrink-0"
+              onsubmit="return confirm('Remover a categoria {{ c.nome }}?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+          <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Remover</button>
+        </form>
+      </div>
+      <div class="flex items-center justify-between gap-2 mt-0.5">
+        {% if c.qtd_lancamentos %}
+        <a href="{{ url_for('lancamentos_listar', q=c.nome) }}" class="text-xs text-gray-400 hover:text-zera-600 no-print">{{ c.qtd_lancamentos }} lançamento(s) — ver itens</a>
+        {% else %}
+        <span></span>
+        {% endif %}
+        <span class="text-xs font-semibold {{ 'text-[#1A6B3A]' if c.tipo == 'receita' else 'text-[#7B2020]' }}">{{ c.valor_total|brl }}</span>
+      </div>
     </li>
     {% else %}
     <li class="px-4 py-6 text-center text-gray-400 text-sm">Nenhuma categoria cadastrada.</li>
@@ -33,11 +43,20 @@
 
 {% block content %}
 <div class="space-y-4">
-  <div class="flex items-center justify-between gap-3">
-    <p class="text-sm text-gray-500 no-print">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <p class="text-sm text-gray-500">
       Edite, inclua ou remova categorias para personalizar os lançamentos de receitas e despesas.
+      Os valores ao lado de cada categoria são o total lançado no ano selecionado.
     </p>
     <div class="flex items-center gap-2 no-print">
+      <form method="GET">
+        <select name="ano" onchange="this.form.submit()"
+                class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          {% for a in anos_disponiveis %}
+          <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </form>
       {% include "_relatorio_toolbar.html" %}
     </div>
   </div>

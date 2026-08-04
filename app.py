@@ -395,6 +395,8 @@ def lancamentos_excluir(id):
 @app.route("/financeiro/categorias")
 @login_required
 def categorias_financeiras_listar():
+    ano = request.args.get("ano", datetime.now().year, type=int)
+
     categorias = CategoriaFinanceira.query.order_by(CategoriaFinanceira.nome).all()
     grupos = {
         ("receita", "fixa"): [],
@@ -402,9 +404,29 @@ def categorias_financeiras_listar():
         ("despesa", "fixa"): [],
         ("despesa", "variavel"): [],
     }
+
+    data_ref_lancamento = db.func.coalesce(LancamentoFinanceiro.data_pagamento, LancamentoFinanceiro.data_vencimento)
+    totais_query = (
+        db.session.query(
+            LancamentoFinanceiro.tipo,
+            LancamentoFinanceiro.categoria,
+            db.func.sum(LancamentoFinanceiro.valor),
+            db.func.count(LancamentoFinanceiro.id),
+        )
+        .filter(db.func.extract("year", data_ref_lancamento) == ano)
+        .group_by(LancamentoFinanceiro.tipo, LancamentoFinanceiro.categoria)
+    )
+    totais = {(tipo, nome): (valor, qtd) for tipo, nome, valor, qtd in totais_query}
+
     for categoria in categorias:
+        valor_total, qtd_lancamentos = totais.get((categoria.tipo, categoria.nome), (0, 0))
+        categoria.valor_total = valor_total
+        categoria.qtd_lancamentos = qtd_lancamentos
         grupos[(categoria.tipo, categoria.natureza)].append(categoria)
-    return render_template("categorias_financeiras/list.html", grupos=grupos)
+
+    return render_template(
+        "categorias_financeiras/list.html", grupos=grupos, ano=ano, anos_disponiveis=_anos_disponiveis()
+    )
 
 
 @app.route("/financeiro/categorias/nova", methods=["POST"])
