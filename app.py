@@ -186,14 +186,19 @@ MESES_ABREV = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "O
 
 def _anos_disponiveis():
     anos = {datetime.now().year}
-    for (d,) in db.session.query(LancamentoFinanceiro.data_vencimento):
-        anos.add(d.year)
-    for (d,) in db.session.query(Compra.data_emissao):
-        anos.add(d.year)
-    for (d,) in db.session.query(EstoqueEntrada.data):
-        anos.add(d.year)
-    for (d,) in db.session.query(Patrimonio.data_aquisicao).filter(Patrimonio.data_aquisicao.isnot(None)):
-        anos.add(d.year)
+    data_ref_lancamento = db.func.coalesce(LancamentoFinanceiro.data_pagamento, LancamentoFinanceiro.data_vencimento)
+    consultas = [
+        db.session.query(db.func.distinct(db.func.extract("year", data_ref_lancamento))),
+        db.session.query(db.func.distinct(db.func.extract("year", Compra.data_emissao))),
+        db.session.query(db.func.distinct(db.func.extract("year", EstoqueEntrada.data))),
+        db.session.query(db.func.distinct(db.func.extract("year", Patrimonio.data_aquisicao))).filter(
+            Patrimonio.data_aquisicao.isnot(None)
+        ),
+    ]
+    for consulta in consultas:
+        for (ano,) in consulta:
+            if ano is not None:
+                anos.add(int(ano))
     return sorted(anos, reverse=True)
 
 
@@ -205,27 +210,34 @@ def dashboard():
     receitas_mes = [0.0] * 12
     despesas_mes = [0.0] * 12
 
-    for lancamento in LancamentoFinanceiro.query.all():
-        ref = lancamento.data_referencia
-        if ref.year != ano:
-            continue
-        if lancamento.tipo == "receita":
-            receitas_mes[ref.month - 1] += lancamento.valor
+    data_ref_lancamento = db.func.coalesce(LancamentoFinanceiro.data_pagamento, LancamentoFinanceiro.data_vencimento)
+    lancamentos_do_ano = db.session.query(
+        LancamentoFinanceiro.tipo, LancamentoFinanceiro.valor, data_ref_lancamento
+    ).filter(db.func.extract("year", data_ref_lancamento) == ano)
+    for tipo, valor, ref in lancamentos_do_ano:
+        if tipo == "receita":
+            receitas_mes[ref.month - 1] += valor
         else:
-            despesas_mes[ref.month - 1] += lancamento.valor
+            despesas_mes[ref.month - 1] += valor
 
     # Despesas automáticas: Compras, Entradas de Estoque e Patrimônio adquirido.
-    for (data_emissao, valor_total) in db.session.query(Compra.data_emissao, Compra.valor_total):
-        if data_emissao.year == ano:
-            despesas_mes[data_emissao.month - 1] += valor_total or 0
+    compras_do_ano = db.session.query(Compra.data_emissao, Compra.valor_total).filter(
+        db.func.extract("year", Compra.data_emissao) == ano
+    )
+    for (data_emissao, valor_total) in compras_do_ano:
+        despesas_mes[data_emissao.month - 1] += valor_total or 0
 
-    for (data, valor_total) in db.session.query(EstoqueEntrada.data, EstoqueEntrada.valor_total):
-        if data.year == ano:
-            despesas_mes[data.month - 1] += valor_total or 0
+    entradas_do_ano = db.session.query(EstoqueEntrada.data, EstoqueEntrada.valor_total).filter(
+        db.func.extract("year", EstoqueEntrada.data) == ano
+    )
+    for (data, valor_total) in entradas_do_ano:
+        despesas_mes[data.month - 1] += valor_total or 0
 
-    for (data_aquisicao, valor) in db.session.query(Patrimonio.data_aquisicao, Patrimonio.valor):
-        if data_aquisicao and data_aquisicao.year == ano:
-            despesas_mes[data_aquisicao.month - 1] += valor or 0
+    patrimonio_do_ano = db.session.query(Patrimonio.data_aquisicao, Patrimonio.valor).filter(
+        Patrimonio.data_aquisicao.isnot(None), db.func.extract("year", Patrimonio.data_aquisicao) == ano
+    )
+    for (data_aquisicao, valor) in patrimonio_do_ano:
+        despesas_mes[data_aquisicao.month - 1] += valor or 0
 
     resumo_mensal = []
     saldo_acumulado = 0.0

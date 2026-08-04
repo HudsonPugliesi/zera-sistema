@@ -1,0 +1,26 @@
+{
+  "name": "zera_flask_templates_v2",
+  "version": "1.0.0",
+  "description": "Sistema completo de gestão escolar: dashboard financeiro, lançamentos de\r receitas/despesas, produtos, entrada/saída de estoque, compras, patrimônio,\r fornecedores, funcionários, alunos, usuários e auditoria. Backend em Flask\r com SQLAlchemy (SQLite) e login via Flask-Login.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -i ./src/tailwind-input.css -o ./static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./src/tailwind-input.css -o ./static/css/tailwind.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HudsonPugliesi/zera-sistema.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/HudsonPugliesi/zera-sistema/issues"
+  },
+  "homepage": "https://github.com/HudsonPugliesi/zera-sistema#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}

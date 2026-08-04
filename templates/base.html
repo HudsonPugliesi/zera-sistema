@@ -11,23 +11,7 @@
     document.documentElement.classList.add('dark');
   }
 </script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: {
-      extend: {
-        colors: {
-          zera: {
-            50: '#eefdf5', 100: '#d6fae6', 200: '#aef2ce', 300: '#7ce6b1',
-            400: '#45d190', 500: '#1fb676', 600: '#14935f', 700: '#13744d',
-            800: '#135c40', 900: '#124b36', 950: '#062a1e'
-          }
-        }
-      }
-    }
-  }
-</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
