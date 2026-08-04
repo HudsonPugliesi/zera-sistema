@@ -549,7 +549,9 @@ def estoque_entrada_listar():
     data_inicio = request.args.get("data_inicio", "")
     data_fim = request.args.get("data_fim", "")
 
-    query = EstoqueEntrada.query.join(Produto)
+    query = EstoqueEntrada.query.join(Produto).options(
+        db.joinedload(EstoqueEntrada.produto), db.joinedload(EstoqueEntrada.fornecedor)
+    )
     if q:
         query = query.filter(Produto.nome.ilike(f"%{q}%"))
     if data_inicio:
@@ -650,7 +652,7 @@ def estoque_saida_listar():
     q = request.args.get("q", "").strip()
     motivo = request.args.get("motivo", "").strip()
 
-    query = EstoqueSaida.query.join(Produto)
+    query = EstoqueSaida.query.join(Produto).options(db.joinedload(EstoqueSaida.produto))
     if q:
         query = query.filter(Produto.nome.ilike(f"%{q}%"))
     if motivo:
@@ -767,7 +769,7 @@ def _aplicar_duplicatas_compra(compra, form):
 def compras_listar():
     q = request.args.get("q", "").strip()
 
-    query = Compra.query.join(Fornecedor)
+    query = Compra.query.join(Fornecedor).options(db.joinedload(Compra.fornecedor))
     if q:
         like = f"%{q}%"
         query = query.filter(db.or_(Compra.numero_nota.ilike(like), Fornecedor.nome.ilike(like)))
@@ -845,7 +847,7 @@ def patrimonio_listar():
     q = request.args.get("q", "").strip()
     status = request.args.get("status", "").strip()
 
-    query = Patrimonio.query
+    query = Patrimonio.query.options(db.joinedload(Patrimonio.responsavel_funcionario))
     if q:
         like = f"%{q}%"
         query = query.filter(db.or_(Patrimonio.codigo.ilike(like), Patrimonio.descricao.ilike(like)))
@@ -1197,7 +1199,7 @@ def inscricoes_listar():
     ano_letivo = request.args.get("ano_letivo", "").strip()
     status = request.args.get("status", "").strip()
 
-    query = Inscricao.query.join(Aluno)
+    query = Inscricao.query.join(Aluno).options(db.joinedload(Inscricao.aluno))
     if q:
         query = query.filter(Aluno.nome.ilike(f"%{q}%"))
     if ano_letivo:
@@ -1493,10 +1495,15 @@ def seed_categorias_financeiras():
         db.session.commit()
 
 
-with app.app_context():
-    db.create_all()
-    seed_admin()
-    seed_categorias_financeiras()
+if not _database_url:
+    # Em produção (Postgres) o esquema já existe e é versionado manualmente
+    # em migrations/ — rodar isso a cada cold start só soma latência sem
+    # necessidade. Mantido apenas para o SQLite local de desenvolvimento,
+    # que precisa se criar sozinho na primeira execução.
+    with app.app_context():
+        db.create_all()
+        seed_admin()
+        seed_categorias_financeiras()
 
 
 if __name__ == "__main__":
