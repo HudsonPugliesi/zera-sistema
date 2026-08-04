@@ -41,7 +41,17 @@ class Usuario(db.Model, UserMixin):
         return check_password_hash(self.senha_hash, senha)
 
 
-class Fornecedor(db.Model):
+class RastreioMixin:
+    """Registra quem criou/alterou o registro e quando, pra exibir na tela
+    (além do log completo já existente na Auditoria)."""
+
+    criado_por = db.Column(db.String(150))
+    criado_em = db.Column(db.DateTime)
+    atualizado_por = db.Column(db.String(150))
+    atualizado_em = db.Column(db.DateTime)
+
+
+class Fornecedor(RastreioMixin, db.Model):
     __tablename__ = "fornecedores"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -56,7 +66,7 @@ class Fornecedor(db.Model):
     observacao = db.Column(db.Text)
 
 
-class Funcionario(db.Model):
+class Funcionario(RastreioMixin, db.Model):
     __tablename__ = "funcionarios"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -71,7 +81,7 @@ class Funcionario(db.Model):
     status = db.Column(db.String(20), nullable=False, default="ativo")
 
 
-class Produto(db.Model):
+class Produto(RastreioMixin, db.Model):
     __tablename__ = "produtos"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -90,7 +100,7 @@ class Produto(db.Model):
     fornecedor = db.relationship("Fornecedor")
 
 
-class EstoqueEntrada(db.Model):
+class EstoqueEntrada(RastreioMixin, db.Model):
     __tablename__ = "estoque_entradas"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -116,7 +126,7 @@ class EstoqueEntrada(db.Model):
         return self.fornecedor.nome if self.fornecedor else ""
 
 
-class EstoqueSaida(db.Model):
+class EstoqueSaida(RastreioMixin, db.Model):
     __tablename__ = "estoque_saidas"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -135,7 +145,7 @@ class EstoqueSaida(db.Model):
         return self.produto.nome if self.produto else ""
 
 
-class Compra(db.Model):
+class Compra(RastreioMixin, db.Model):
     __tablename__ = "compras"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -175,7 +185,7 @@ class Duplicata(db.Model):
     data_vencimento = db.Column(db.Date, nullable=False)
 
 
-class Patrimonio(db.Model):
+class Patrimonio(RastreioMixin, db.Model):
     __tablename__ = "patrimonios"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -197,7 +207,7 @@ class Patrimonio(db.Model):
         return self.responsavel_funcionario.nome if self.responsavel_funcionario else ""
 
 
-class Aluno(db.Model):
+class Aluno(RastreioMixin, db.Model):
     __tablename__ = "alunos"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -227,7 +237,7 @@ class Aluno(db.Model):
     inscricoes = db.relationship("Inscricao", backref="aluno", cascade="all, delete-orphan")
 
 
-class Inscricao(db.Model):
+class Inscricao(RastreioMixin, db.Model):
     __tablename__ = "inscricoes"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -245,7 +255,7 @@ class Inscricao(db.Model):
         return self.aluno.nome if self.aluno else ""
 
 
-class CategoriaFinanceira(db.Model):
+class CategoriaFinanceira(RastreioMixin, db.Model):
     __tablename__ = "categorias_financeiras"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -254,7 +264,7 @@ class CategoriaFinanceira(db.Model):
     nome = db.Column(db.String(150), nullable=False)
 
 
-class LancamentoFinanceiro(db.Model):
+class LancamentoFinanceiro(RastreioMixin, db.Model):
     __tablename__ = "lancamentos_financeiros"
 
     id = db.Column(db.Integer, primary_key=True)

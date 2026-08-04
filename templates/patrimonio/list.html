@@ -45,7 +45,10 @@
         {% for bem in patrimonios %}
         <tr class="hover:bg-gray-50">
           <td class="px-5 py-3 text-gray-600">{{ bem.codigo }}</td>
-          <td class="px-5 py-3 text-gray-800 font-medium">{{ bem.descricao }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            {{ bem.descricao }}
+            {% set _rastreio_obj = bem %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ bem.categoria }}</td>
           <td class="px-5 py-3 text-gray-600">{{ bem.localizacao }}</td>
           <td class="px-5 py-3 text-gray-600">{{ bem.responsavel }}</td>

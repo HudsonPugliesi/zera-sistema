@@ -119,6 +119,16 @@ def format_brl(value):
     return f"(R${texto})" if value < 0 else f"R${texto}"
 
 
+def marcar_criacao(obj):
+    obj.criado_por = current_user.nome
+    obj.criado_em = datetime.now().replace(microsecond=0)
+
+
+def marcar_atualizacao(obj):
+    obj.atualizado_por = current_user.nome
+    obj.atualizado_em = datetime.now().replace(microsecond=0)
+
+
 def registrar_auditoria(acao, modulo, descricao):
     usuario_nome = current_user.nome if current_user.is_authenticated else "Sistema"
     log = Auditoria(
@@ -317,6 +327,7 @@ def lancamentos_novo():
             data_vencimento=parse_date(request.form["data_vencimento"]),
             data_pagamento=parse_date(request.form.get("data_pagamento")),
         )
+        marcar_criacao(lancamento)
         db.session.add(lancamento)
         db.session.commit()
         registrar_auditoria(
@@ -340,6 +351,7 @@ def lancamentos_editar(id):
         lancamento.valor = float(request.form.get("valor") or 0)
         lancamento.data_vencimento = parse_date(request.form["data_vencimento"])
         lancamento.data_pagamento = parse_date(request.form.get("data_pagamento"))
+        marcar_atualizacao(lancamento)
         db.session.commit()
         registrar_auditoria("edicao", "financeiro", f"Lançamento #{lancamento.id} atualizado")
         flash("Lançamento atualizado com sucesso.", "success")
@@ -387,7 +399,9 @@ def categorias_financeiras_nova():
     tipo = request.form.get("tipo")
     natureza = request.form.get("natureza")
     if nome and tipo and natureza:
-        db.session.add(CategoriaFinanceira(tipo=tipo, natureza=natureza, nome=nome))
+        categoria = CategoriaFinanceira(tipo=tipo, natureza=natureza, nome=nome)
+        marcar_criacao(categoria)
+        db.session.add(categoria)
         db.session.commit()
         registrar_auditoria("criacao", "financeiro", f"Categoria {nome} ({tipo}/{natureza}) cadastrada")
         flash("Categoria cadastrada com sucesso.", "success")
@@ -457,6 +471,7 @@ def produtos_novo():
             status=request.form.get("status", "ativo"),
             descricao=request.form.get("descricao", ""),
         )
+        marcar_criacao(produto)
         db.session.add(produto)
         db.session.commit()
         registrar_auditoria("criacao", "produtos", f"Produto {produto.nome} cadastrado")
@@ -485,6 +500,7 @@ def produtos_editar(id):
         produto.fornecedor_id = request.form.get("fornecedor_id") or None
         produto.status = request.form.get("status", "ativo")
         produto.descricao = request.form.get("descricao", "")
+        marcar_atualizacao(produto)
         db.session.commit()
         registrar_auditoria("edicao", "produtos", f"Produto {produto.nome} atualizado")
         flash("Produto atualizado com sucesso.", "success")
@@ -549,6 +565,7 @@ def estoque_entrada_nova():
             observacao=request.form.get("observacao", ""),
         )
         produto.quantidade = (produto.quantidade or 0) + quantidade
+        marcar_criacao(entrada)
         db.session.add(entrada)
         db.session.commit()
         registrar_auditoria("criacao", "estoque", f"Entrada de {quantidade} un. de {produto.nome}")
@@ -582,6 +599,7 @@ def estoque_entrada_editar(id):
         produto_novo = db.get_or_404(Produto, entrada.produto_id)
         produto_novo.quantidade = (produto_novo.quantidade or 0) + entrada.quantidade
 
+        marcar_atualizacao(entrada)
         db.session.commit()
         registrar_auditoria("edicao", "estoque", f"Entrada #{entrada.id} atualizada")
         flash("Entrada atualizada com sucesso.", "success")
@@ -643,6 +661,7 @@ def estoque_saida_nova():
             observacao=request.form.get("observacao", ""),
         )
         produto.quantidade = (produto.quantidade or 0) - quantidade
+        marcar_criacao(saida)
         db.session.add(saida)
         db.session.commit()
         registrar_auditoria("criacao", "estoque", f"Saída de {quantidade} un. de {produto.nome}")
@@ -673,6 +692,7 @@ def estoque_saida_editar(id):
         produto_novo = db.get_or_404(Produto, saida.produto_id)
         produto_novo.quantidade = (produto_novo.quantidade or 0) - saida.quantidade
 
+        marcar_atualizacao(saida)
         db.session.commit()
         registrar_auditoria("edicao", "estoque", f"Saída #{saida.id} atualizada")
         flash("Saída atualizada com sucesso.", "success")
@@ -753,6 +773,7 @@ def compras_nova():
         )
         _aplicar_itens_compra(compra, request.form)
         _aplicar_duplicatas_compra(compra, request.form)
+        marcar_criacao(compra)
         db.session.add(compra)
         db.session.commit()
         registrar_auditoria("criacao", "compras", f"Compra #{compra.numero_nota} registrada")
@@ -775,6 +796,7 @@ def compras_editar(id):
         compra.observacao = request.form.get("observacao", "")
         _aplicar_itens_compra(compra, request.form)
         _aplicar_duplicatas_compra(compra, request.form)
+        marcar_atualizacao(compra)
         db.session.commit()
         registrar_auditoria("edicao", "compras", f"Compra #{compra.numero_nota} atualizada")
         flash("Compra atualizada com sucesso.", "success")
@@ -835,6 +857,7 @@ def patrimonio_novo():
             status=request.form.get("status", "ativo"),
             observacao=request.form.get("observacao", ""),
         )
+        marcar_criacao(bem)
         db.session.add(bem)
         db.session.commit()
         registrar_auditoria("criacao", "patrimonio", f"Bem {bem.codigo} cadastrado")
@@ -860,6 +883,7 @@ def patrimonio_editar(id):
         bem.estado_conservacao = request.form.get("estado_conservacao", "bom")
         bem.status = request.form.get("status", "ativo")
         bem.observacao = request.form.get("observacao", "")
+        marcar_atualizacao(bem)
         db.session.commit()
         registrar_auditoria("edicao", "patrimonio", f"Bem {bem.codigo} atualizado")
         flash("Bem patrimonial atualizado com sucesso.", "success")
@@ -914,6 +938,7 @@ def fornecedores_novo():
             status=request.form.get("status", "ativo"),
             observacao=request.form.get("observacao", ""),
         )
+        marcar_criacao(fornecedor)
         db.session.add(fornecedor)
         db.session.commit()
         registrar_auditoria("criacao", "fornecedores", f"Fornecedor {fornecedor.nome} cadastrado")
@@ -936,6 +961,7 @@ def fornecedores_editar(id):
         fornecedor.endereco = request.form.get("endereco", "")
         fornecedor.status = request.form.get("status", "ativo")
         fornecedor.observacao = request.form.get("observacao", "")
+        marcar_atualizacao(fornecedor)
         db.session.commit()
         registrar_auditoria("edicao", "fornecedores", f"Fornecedor {fornecedor.nome} atualizado")
         flash("Fornecedor atualizado com sucesso.", "success")
@@ -994,6 +1020,7 @@ def funcionarios_novo():
             nivel_acesso=request.form.get("nivel_acesso", "operador"),
             status=request.form.get("status", "ativo"),
         )
+        marcar_criacao(funcionario)
         db.session.add(funcionario)
         db.session.commit()
         registrar_auditoria("criacao", "funcionarios", f"Funcionário {funcionario.nome} cadastrado")
@@ -1016,6 +1043,7 @@ def funcionarios_editar(id):
         funcionario.email = request.form.get("email", "")
         funcionario.nivel_acesso = request.form.get("nivel_acesso", "operador")
         funcionario.status = request.form.get("status", "ativo")
+        marcar_atualizacao(funcionario)
         db.session.commit()
         registrar_auditoria("edicao", "funcionarios", f"Funcionário {funcionario.nome} atualizado")
         flash("Funcionário atualizado com sucesso.", "success")
@@ -1086,6 +1114,7 @@ def alunos_novo():
             status=request.form.get("status", "ativo"),
             observacao=request.form.get("observacao", ""),
         )
+        marcar_criacao(aluno)
         db.session.add(aluno)
         db.session.commit()
         registrar_auditoria("criacao", "alunos", f"Aluno {aluno.nome} cadastrado")
@@ -1121,6 +1150,7 @@ def alunos_editar(id):
         aluno.data_matricula = parse_date(request.form.get("data_matricula"))
         aluno.status = request.form.get("status", "ativo")
         aluno.observacao = request.form.get("observacao", "")
+        marcar_atualizacao(aluno)
         db.session.commit()
         registrar_auditoria("edicao", "alunos", f"Aluno {aluno.nome} atualizado")
         flash("Aluno atualizado com sucesso.", "success")
@@ -1180,6 +1210,7 @@ def inscricoes_nova():
             status=request.form.get("status", "ativa"),
             observacao=request.form.get("observacao", ""),
         )
+        marcar_criacao(inscricao)
         db.session.add(inscricao)
         db.session.commit()
         registrar_auditoria(
@@ -1204,6 +1235,7 @@ def inscricoes_editar(id):
         inscricao.data_inscricao = parse_date(request.form["data_inscricao"])
         inscricao.status = request.form.get("status", "ativa")
         inscricao.observacao = request.form.get("observacao", "")
+        marcar_atualizacao(inscricao)
         db.session.commit()
         registrar_auditoria("edicao", "inscricoes", f"Inscrição #{inscricao.id} atualizada")
         flash("Inscrição atualizada com sucesso.", "success")

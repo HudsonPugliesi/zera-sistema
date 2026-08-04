@@ -1,0 +1,15 @@
+{% if _rastreio_obj and _rastreio_obj.id %}
+<div class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-4 py-2.5 text-xs text-gray-500 dark:text-gray-400 no-print">
+  <div class="space-x-4">
+    {% if _rastreio_obj.criado_por %}
+      <span>Cadastrado por <span class="font-medium text-gray-700 dark:text-gray-300">{{ _rastreio_obj.criado_por }}</span>{% if _rastreio_obj.criado_em %} em {{ _rastreio_obj.criado_em.strftime('%d/%m/%Y às %H:%M') }}{% endif %}</span>
+    {% endif %}
+    {% if _rastreio_obj.atualizado_por %}
+      <span>· Última alteração por <span class="font-medium text-gray-700 dark:text-gray-300">{{ _rastreio_obj.atualizado_por }}</span>{% if _rastreio_obj.atualizado_em %} em {{ _rastreio_obj.atualizado_em.strftime('%d/%m/%Y às %H:%M') }}{% endif %}</span>
+    {% endif %}
+  </div>
+  {% if _rastreio_modulo and current_user.is_authenticated and current_user.perfil == 'admin' %}
+  <a href="{{ url_for('auditoria_listar', modulo=_rastreio_modulo, q=_rastreio_query or '') }}" class="text-zera-600 hover:text-zera-800 font-medium whitespace-nowrap">Ver histórico →</a>
+  {% endif %}
+</div>
+{% endif %}

@@ -44,7 +44,10 @@
         {% for entrada in entradas %}
         <tr class="hover:bg-gray-50">
           <td class="px-5 py-3 text-gray-600">{{ entrada.data }}</td>
-          <td class="px-5 py-3 text-gray-800 font-medium">{{ entrada.produto_nome }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            {{ entrada.produto_nome }}
+            {% set _rastreio_obj = entrada %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ entrada.fornecedor_nome }}</td>
           <td class="px-5 py-3 text-gray-600">{{ entrada.nota_fiscal }}</td>
           <td class="px-5 py-3 text-gray-600 text-right">{{ entrada.quantidade }}</td>

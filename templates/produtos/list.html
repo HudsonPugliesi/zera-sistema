@@ -46,7 +46,10 @@
         {% for produto in produtos %}
         <tr class="hover:bg-gray-50">
           <td class="px-5 py-3 text-gray-600">{{ produto.codigo }}</td>
-          <td class="px-5 py-3 text-gray-800 font-medium">{{ produto.nome }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            {{ produto.nome }}
+            {% set _rastreio_obj = produto %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ produto.categoria }}</td>
           <td class="px-5 py-3 text-gray-600">{{ produto.unidade }}</td>
           <td class="px-5 py-3 text-gray-600 text-right">R$ {{ '%.2f'|format(produto.preco_venda) }}</td>

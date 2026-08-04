@@ -64,6 +64,11 @@
       <button type="submit" class="px-5 py-2 rounded-lg bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold">Salvar</button>
     </div>
   </form>
+
+  {% set _rastreio_obj = lancamento %}
+  {% set _rastreio_modulo = 'financeiro' %}
+  {% set _rastreio_query = lancamento.categoria if lancamento else '' %}
+  <div class="mt-4">{% include "_rastreio_info.html" %}</div>
 </div>
 {% endblock %}
 

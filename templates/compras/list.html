@@ -35,7 +35,10 @@
       <tbody class="divide-y divide-gray-100">
         {% for compra in compras %}
         <tr class="hover:bg-gray-50">
-          <td class="px-5 py-3 text-gray-800 font-medium">#{{ compra.numero_nota }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            #{{ compra.numero_nota }}
+            {% set _rastreio_obj = compra %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ compra.fornecedor_nome }}</td>
           <td class="px-5 py-3 text-gray-600">{{ compra.data_emissao }}</td>
           <td class="px-5 py-3 text-gray-800 font-medium text-right">R$ {{ '%.2f'|format(compra.valor_total) }}</td>

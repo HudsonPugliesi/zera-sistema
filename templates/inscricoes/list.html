@@ -49,7 +49,10 @@
       <tbody class="divide-y divide-gray-100">
         {% for inscricao in inscricoes %}
         <tr class="hover:bg-gray-50">
-          <td class="px-5 py-3 text-gray-800 font-medium">{{ inscricao.aluno_nome }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            {{ inscricao.aluno_nome }}
+            {% set _rastreio_obj = inscricao %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ inscricao.ano_letivo }}</td>
           <td class="px-5 py-3 text-gray-600">{{ inscricao.serie }}</td>
           <td class="px-5 py-3 text-gray-600">{{ inscricao.turma }}</td>

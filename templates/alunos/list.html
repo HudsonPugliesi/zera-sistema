@@ -43,7 +43,10 @@
       <tbody class="divide-y divide-gray-100">
         {% for aluno in alunos %}
         <tr class="hover:bg-gray-50">
-          <td class="px-5 py-3 text-gray-800 font-medium">{{ aluno.nome }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            {{ aluno.nome }}
+            {% set _rastreio_obj = aluno %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ aluno.serie }}</td>
           <td class="px-5 py-3 text-gray-600">{{ aluno.turma }}</td>
           <td class="px-5 py-3 text-gray-600">{{ aluno.responsavel_nome }}</td>

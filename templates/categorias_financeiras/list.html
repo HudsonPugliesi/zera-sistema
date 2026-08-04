@@ -9,7 +9,7 @@
   <ul class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
     {% for c in itens %}
     <li class="px-4 py-2 flex items-center justify-between text-sm">
-      <span class="text-gray-700">{{ c.nome }}</span>
+      <span class="text-gray-700" {% if c.criado_por %}title="Cadastrado por {{ c.criado_por }}{% if c.criado_em %} em {{ c.criado_em.strftime('%d/%m/%Y às %H:%M') }}{% endif %}"{% endif %}>{{ c.nome }}</span>
       <form method="POST" action="{{ url_for('categorias_financeiras_excluir', id=c.id) }}" class="no-print"
             onsubmit="return confirm('Remover a categoria {{ c.nome }}?');">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">

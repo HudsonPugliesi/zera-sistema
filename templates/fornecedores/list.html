@@ -37,7 +37,10 @@
       <tbody class="divide-y divide-gray-100">
         {% for fornecedor in fornecedores %}
         <tr class="hover:bg-gray-50">
-          <td class="px-5 py-3 text-gray-800 font-medium">{{ fornecedor.nome }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            {{ fornecedor.nome }}
+            {% set _rastreio_obj = fornecedor %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ fornecedor.documento }}</td>
           <td class="px-5 py-3 text-gray-600">{{ fornecedor.contato }}</td>
           <td class="px-5 py-3 text-gray-600">{{ fornecedor.telefone }}</td>

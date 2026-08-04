@@ -45,7 +45,10 @@
         {% for saida in saidas %}
         <tr class="hover:bg-gray-50">
           <td class="px-5 py-3 text-gray-600">{{ saida.data }}</td>
-          <td class="px-5 py-3 text-gray-800 font-medium">{{ saida.produto_nome }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            {{ saida.produto_nome }}
+            {% set _rastreio_obj = saida %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ saida.destino }}</td>
           <td class="px-5 py-3">
             <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">{{ saida.motivo|capitalize }}</span>

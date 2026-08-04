@@ -54,7 +54,10 @@
               {{ 'Receita' if lancamento.tipo == 'receita' else 'Despesa' }}
             </span>
           </td>
-          <td class="px-5 py-3 text-gray-800 font-medium">{{ lancamento.categoria }}</td>
+          <td class="px-5 py-3 text-gray-800 font-medium">
+            {{ lancamento.categoria }}
+            {% set _rastreio_obj = lancamento %}{% include "_rastreio_caption.html" %}
+          </td>
           <td class="px-5 py-3 text-gray-600">{{ lancamento.descricao }}</td>
           <td class="px-5 py-3 text-right text-gray-600">{{ lancamento.valor|brl }}</td>
           <td class="px-5 py-3 text-gray-600 whitespace-nowrap">{{ lancamento.data_vencimento }}</td>

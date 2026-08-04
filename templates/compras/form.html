@@ -107,6 +107,11 @@
       <button type="submit" class="px-5 py-2 rounded-lg bg-zera-600 hover:bg-zera-700 text-white text-sm font-semibold">Salvar</button>
     </div>
   </form>
+
+  {% set _rastreio_obj = compra %}
+  {% set _rastreio_modulo = 'compras' %}
+  {% set _rastreio_query = compra.numero_nota if compra else '' %}
+  <div class="mt-4">{% include "_rastreio_info.html" %}</div>
 </div>
 
 <template id="templateItem">
