@@ -3,6 +3,7 @@ import io
 import os
 import secrets
 from datetime import datetime, timedelta
+from functools import wraps
 
 from dotenv import load_dotenv
 from flask import Flask, Response, flash, redirect, render_template, request, url_for
@@ -68,6 +69,14 @@ app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = _engine_options
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# Em produção (Vercel ou USE_HTTPS=true) o site só é servido via HTTPS, então o
+# cookie de sessão pode exigir conexão segura. Em dev local sem HTTPS isso
+# quebraria o login, por isso fica condicional.
+_cookies_seguros = bool(os.environ.get("VERCEL")) or os.environ.get("USE_HTTPS", "false").lower() == "true"
+app.config["SESSION_COOKIE_SECURE"] = _cookies_seguros
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
 db.init_app(app)
 csrf = CSRFProtect(app)
 
@@ -81,6 +90,16 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(Usuario, int(user_id))
+
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.perfil != "admin":
+            flash("Acesso restrito a administradores.", "error")
+            return redirect(url_for("home"))
+        return view(*args, **kwargs)
+    return wrapped
 
 
 @app.context_processor
@@ -1178,6 +1197,7 @@ def inscricoes_excluir(id):
 
 @app.route("/usuarios")
 @login_required
+@admin_required
 def usuarios_listar():
     q = request.args.get("q", "").strip()
     perfil = request.args.get("perfil", "").strip()
@@ -1195,6 +1215,7 @@ def usuarios_listar():
 
 @app.route("/usuarios/novo", methods=["GET", "POST"])
 @login_required
+@admin_required
 def usuarios_novo():
     if request.method == "POST":
         usuario = Usuario(
@@ -1215,13 +1236,15 @@ def usuarios_novo():
 
 @app.route("/usuarios/<int:id>/editar", methods=["GET", "POST"])
 @login_required
+@admin_required
 def usuarios_editar(id):
     usuario = db.get_or_404(Usuario, id)
     if request.method == "POST":
         usuario.nome = request.form["nome"].strip()
         usuario.login = request.form["login"].strip()
         usuario.email = request.form["email"].strip()
-        usuario.perfil = request.form.get("perfil", "operador")
+        if usuario.id != current_user.id:
+            usuario.perfil = request.form.get("perfil", "operador")
         usuario.status = request.form.get("status", "ativo")
         senha = request.form.get("senha", "").strip()
         if senha:
@@ -1235,6 +1258,7 @@ def usuarios_editar(id):
 
 @app.route("/usuarios/<int:id>/excluir", methods=["POST"])
 @login_required
+@admin_required
 def usuarios_excluir(id):
     if id == current_user.id:
         flash("Você não pode excluir seu próprio usuário.", "error")
@@ -1276,20 +1300,31 @@ def _query_auditoria(args):
 
 @app.route("/auditoria")
 @login_required
+@admin_required
 def auditoria_listar():
     logs, pagination = paginar_ou_todos(_query_auditoria(request.args), Auditoria.data_hora.desc())
     return render_template("auditoria/list.html", logs=logs, pagination=pagination)
 
 
+def _csv_seguro(valor):
+    """Evita CSV Injection: neutraliza valores que o Excel/LibreOffice
+    interpretaria como fórmula (=, +, -, @) prefixando com um apóstrofo."""
+    texto = str(valor) if valor is not None else ""
+    if texto and texto[0] in ("=", "+", "-", "@"):
+        return "'" + texto
+    return texto
+
+
 @app.route("/auditoria/exportar")
 @login_required
+@admin_required
 def auditoria_exportar():
     logs = _query_auditoria(request.args).order_by(Auditoria.data_hora.desc()).all()
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(["Data/Hora", "Usuário", "Ação", "Módulo", "Descrição", "IP"])
     for log in logs:
-        writer.writerow([log.data_hora, log.usuario, log.acao, log.modulo, log.descricao, log.ip])
+        writer.writerow([_csv_seguro(v) for v in (log.data_hora, log.usuario, log.acao, log.modulo, log.descricao, log.ip)])
     return Response(
         buffer.getvalue(),
         mimetype="text/csv",
