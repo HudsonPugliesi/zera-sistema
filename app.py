@@ -293,6 +293,7 @@ def lancamentos_listar():
 
 @app.route("/financeiro/lancamentos/novo", methods=["GET", "POST"])
 @login_required
+@admin_required
 def lancamentos_novo():
     if request.method == "POST":
         lancamento = LancamentoFinanceiro(
@@ -316,6 +317,7 @@ def lancamentos_novo():
 
 @app.route("/financeiro/lancamentos/<int:id>/editar", methods=["GET", "POST"])
 @login_required
+@admin_required
 def lancamentos_editar(id):
     lancamento = db.get_or_404(LancamentoFinanceiro, id)
     if request.method == "POST":
@@ -335,6 +337,7 @@ def lancamentos_editar(id):
 
 @app.route("/financeiro/lancamentos/<int:id>/excluir", methods=["POST"])
 @login_required
+@admin_required
 def lancamentos_excluir(id):
     lancamento = db.get_or_404(LancamentoFinanceiro, id)
     descricao = f"{lancamento.tipo} ({lancamento.categoria})"
@@ -366,6 +369,7 @@ def categorias_financeiras_listar():
 
 @app.route("/financeiro/categorias/nova", methods=["POST"])
 @login_required
+@admin_required
 def categorias_financeiras_nova():
     nome = request.form.get("nome", "").strip()
     tipo = request.form.get("tipo")
@@ -380,6 +384,7 @@ def categorias_financeiras_nova():
 
 @app.route("/financeiro/categorias/<int:id>/excluir", methods=["POST"])
 @login_required
+@admin_required
 def categorias_financeiras_excluir(id):
     categoria = db.get_or_404(CategoriaFinanceira, id)
     nome = categoria.nome
@@ -511,6 +516,7 @@ def estoque_entrada_listar():
 
 @app.route("/estoque/entrada/nova", methods=["GET", "POST"])
 @login_required
+@admin_required
 def estoque_entrada_nova():
     if request.method == "POST":
         quantidade = int(request.form["quantidade"])
@@ -540,6 +546,7 @@ def estoque_entrada_nova():
 
 @app.route("/estoque/entrada/<int:id>/editar", methods=["GET", "POST"])
 @login_required
+@admin_required
 def estoque_entrada_editar(id):
     entrada = db.get_or_404(EstoqueEntrada, id)
     if request.method == "POST":
@@ -571,6 +578,7 @@ def estoque_entrada_editar(id):
 
 @app.route("/estoque/entrada/<int:id>/excluir", methods=["POST"])
 @login_required
+@admin_required
 def estoque_entrada_excluir(id):
     entrada = db.get_or_404(EstoqueEntrada, id)
     produto = db.session.get(Produto, entrada.produto_id)
@@ -605,6 +613,7 @@ def estoque_saida_listar():
 
 @app.route("/estoque/saida/nova", methods=["GET", "POST"])
 @login_required
+@admin_required
 def estoque_saida_nova():
     if request.method == "POST":
         quantidade = int(request.form["quantidade"])
@@ -630,6 +639,7 @@ def estoque_saida_nova():
 
 @app.route("/estoque/saida/<int:id>/editar", methods=["GET", "POST"])
 @login_required
+@admin_required
 def estoque_saida_editar(id):
     saida = db.get_or_404(EstoqueSaida, id)
     if request.method == "POST":
@@ -658,6 +668,7 @@ def estoque_saida_editar(id):
 
 @app.route("/estoque/saida/<int:id>/excluir", methods=["POST"])
 @login_required
+@admin_required
 def estoque_saida_excluir(id):
     saida = db.get_or_404(EstoqueSaida, id)
     produto = db.session.get(Produto, saida.produto_id)
@@ -716,6 +727,7 @@ def compras_listar():
 
 @app.route("/compras/nova", methods=["GET", "POST"])
 @login_required
+@admin_required
 def compras_nova():
     if request.method == "POST":
         compra = Compra(
@@ -738,6 +750,7 @@ def compras_nova():
 
 @app.route("/compras/<int:id>/editar", methods=["GET", "POST"])
 @login_required
+@admin_required
 def compras_editar(id):
     compra = db.get_or_404(Compra, id)
     if request.method == "POST":
@@ -758,6 +771,7 @@ def compras_editar(id):
 
 @app.route("/compras/<int:id>/excluir", methods=["POST"])
 @login_required
+@admin_required
 def compras_excluir(id):
     compra = db.get_or_404(Compra, id)
     numero = compra.numero_nota
@@ -791,6 +805,7 @@ def patrimonio_listar():
 
 @app.route("/patrimonio/novo", methods=["GET", "POST"])
 @login_required
+@admin_required
 def patrimonio_novo():
     if request.method == "POST":
         bem = Patrimonio(
@@ -816,6 +831,7 @@ def patrimonio_novo():
 
 @app.route("/patrimonio/<int:id>/editar", methods=["GET", "POST"])
 @login_required
+@admin_required
 def patrimonio_editar(id):
     bem = db.get_or_404(Patrimonio, id)
     if request.method == "POST":
@@ -839,6 +855,7 @@ def patrimonio_editar(id):
 
 @app.route("/patrimonio/<int:id>/excluir", methods=["POST"])
 @login_required
+@admin_required
 def patrimonio_excluir(id):
     bem = db.get_or_404(Patrimonio, id)
     codigo = bem.codigo
