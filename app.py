@@ -429,6 +429,7 @@ def _gerar_codigo_produto():
 
 @app.route("/produtos/novo", methods=["GET", "POST"])
 @login_required
+@admin_required
 def produtos_novo():
     if request.method == "POST":
         produto = Produto(
@@ -457,6 +458,7 @@ def produtos_novo():
 
 @app.route("/produtos/<int:id>/editar", methods=["GET", "POST"])
 @login_required
+@admin_required
 def produtos_editar(id):
     produto = db.get_or_404(Produto, id)
     if request.method == "POST":
@@ -481,6 +483,7 @@ def produtos_editar(id):
 
 @app.route("/produtos/<int:id>/excluir", methods=["POST"])
 @login_required
+@admin_required
 def produtos_excluir(id):
     produto = db.get_or_404(Produto, id)
     nome = produto.nome
