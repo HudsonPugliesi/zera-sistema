@@ -56,7 +56,7 @@
           <td class="px-5 py-3 text-gray-600">{{ inscricao.ano_letivo }}</td>
           <td class="px-5 py-3 text-gray-600">{{ inscricao.serie }}</td>
           <td class="px-5 py-3 text-gray-600">{{ inscricao.turma }}</td>
-          <td class="px-5 py-3 text-gray-600">{{ inscricao.data_inscricao }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ inscricao.data_inscricao|data_br }}</td>
           <td class="px-5 py-3">
             <span class="px-2 py-1 rounded-full text-xs font-medium
               {% if inscricao.status == 'ativa' %}bg-green-100 text-green-700

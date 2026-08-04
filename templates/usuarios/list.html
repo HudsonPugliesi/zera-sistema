@@ -49,7 +49,7 @@
           <td class="px-5 py-3">
             <span class="px-2 py-1 rounded-full text-xs font-medium bg-zera-100 text-zera-700">{{ usuario.perfil|capitalize }}</span>
           </td>
-          <td class="px-5 py-3 text-gray-600">{{ usuario.ultimo_acesso or '—' }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ usuario.ultimo_acesso|datahora_br }}</td>
           <td class="px-5 py-3">
             <span class="px-2 py-1 rounded-full text-xs font-medium {% if usuario.status == 'ativo' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
               {{ usuario.status|capitalize }}

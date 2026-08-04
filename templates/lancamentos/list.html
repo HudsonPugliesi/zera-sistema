@@ -60,7 +60,7 @@
           </td>
           <td class="px-5 py-3 text-gray-600">{{ lancamento.descricao }}</td>
           <td class="px-5 py-3 text-right text-gray-600">{{ lancamento.valor|brl }}</td>
-          <td class="px-5 py-3 text-gray-600 whitespace-nowrap">{{ lancamento.data_vencimento }}</td>
+          <td class="px-5 py-3 text-gray-600 whitespace-nowrap">{{ lancamento.data_vencimento|data_br }}</td>
           <td class="px-5 py-3">
             <span class="px-2 py-1 rounded-full text-xs font-medium
               {% if lancamento.status in ('Pago', 'Recebido') %}bg-green-100 text-green-700

@@ -119,6 +119,22 @@ def format_brl(value):
     return f"(R${texto})" if value < 0 else f"R${texto}"
 
 
+@app.template_filter("data_br")
+def format_data_br(value):
+    """Formata date/datetime no padrão brasileiro (dd/mm/aaaa)."""
+    if not value:
+        return "-"
+    return value.strftime("%d/%m/%Y")
+
+
+@app.template_filter("datahora_br")
+def format_datahora_br(value):
+    """Formata datetime no padrão brasileiro (dd/mm/aaaa hh:mm)."""
+    if not value:
+        return "-"
+    return value.strftime("%d/%m/%Y %H:%M")
+
+
 def marcar_criacao(obj):
     obj.criado_por = current_user.nome
     obj.criado_em = datetime.now().replace(microsecond=0)
@@ -1388,7 +1404,8 @@ def auditoria_exportar():
     writer = csv.writer(buffer)
     writer.writerow(["Data/Hora", "Usuário", "Ação", "Módulo", "Descrição", "IP"])
     for log in logs:
-        writer.writerow([_csv_seguro(v) for v in (log.data_hora, log.usuario, log.acao, log.modulo, log.descricao, log.ip)])
+        data_hora = log.data_hora.strftime("%d/%m/%Y %H:%M:%S") if log.data_hora else ""
+        writer.writerow([_csv_seguro(v) for v in (data_hora, log.usuario, log.acao, log.modulo, log.descricao, log.ip)])
     return Response(
         buffer.getvalue(),
         mimetype="text/csv",

@@ -40,7 +40,7 @@
             {% set _rastreio_obj = compra %}{% include "_rastreio_caption.html" %}
           </td>
           <td class="px-5 py-3 text-gray-600">{{ compra.fornecedor_nome }}</td>
-          <td class="px-5 py-3 text-gray-600">{{ compra.data_emissao }}</td>
+          <td class="px-5 py-3 text-gray-600">{{ compra.data_emissao|data_br }}</td>
           <td class="px-5 py-3 text-gray-800 font-medium text-right">R$ {{ '%.2f'|format(compra.valor_total) }}</td>
           <td class="px-5 py-3 text-right space-x-2 whitespace-nowrap no-print">
             <a href="{{ url_for('compras_editar', id=compra.id) }}" class="text-zera-600 hover:text-zera-800 font-medium">Editar</a>

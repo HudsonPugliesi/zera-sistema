@@ -57,7 +57,7 @@
       <tbody class="divide-y divide-gray-100">
         {% for log in logs %}
         <tr class="hover:bg-gray-50">
-          <td class="px-5 py-3 text-gray-600 whitespace-nowrap">{{ log.data_hora }}</td>
+          <td class="px-5 py-3 text-gray-600 whitespace-nowrap">{{ log.data_hora|datahora_br }}</td>
           <td class="px-5 py-3 text-gray-800 font-medium">{{ log.usuario }}</td>
           <td class="px-5 py-3">
             <span class="px-2 py-1 rounded-full text-xs font-medium
