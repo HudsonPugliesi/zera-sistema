@@ -66,7 +66,7 @@
           <td class="px-5 py-2.5 text-right text-gray-600">{{ m.receitas|brl }}</td>
           <td class="px-5 py-2.5 text-right text-gray-600">{{ m.despesas|brl }}</td>
           <td class="px-5 py-2.5 text-right {{ 'text-red-600' if m.saldo_mes is not none and m.saldo_mes < 0 else 'text-gray-700' }}">{{ m.saldo_mes|brl }}</td>
-          <td class="px-5 py-2.5 text-right font-semibold text-[#1B2A4A]">{{ m.saldo_acumulado|brl }}</td>
+          <td class="px-5 py-2.5 text-right font-semibold text-[#1B2A4A] dark:text-blue-200">{{ m.saldo_acumulado|brl }}</td>
         </tr>
         {% endfor %}
       </tbody>
