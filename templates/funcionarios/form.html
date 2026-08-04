@@ -52,12 +52,13 @@
                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nível de acesso</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nível de acesso (informativo)</label>
         <select name="nivel_acesso" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
           <option value="operador" {% if funcionario and funcionario.nivel_acesso == 'operador' %}selected{% endif %}>Operador</option>
           <option value="gerente" {% if funcionario and funcionario.nivel_acesso == 'gerente' %}selected{% endif %}>Gerente</option>
           <option value="admin" {% if funcionario and funcionario.nivel_acesso == 'admin' %}selected{% endif %}>Administrador</option>
         </select>
+        <p class="mt-1 text-xs text-gray-500">Apenas para referência de cargo/hierarquia. Não controla o acesso ao sistema — isso é definido no cadastro de Usuários.</p>
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
