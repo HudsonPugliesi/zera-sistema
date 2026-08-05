@@ -396,6 +396,7 @@ def lancamentos_excluir(id):
 @login_required
 def categorias_financeiras_listar():
     ano = request.args.get("ano", datetime.now().year, type=int)
+    mes = request.args.get("mes", datetime.now().month, type=int)
 
     categorias = CategoriaFinanceira.query.order_by(CategoriaFinanceira.nome).all()
     grupos = {
@@ -416,6 +417,8 @@ def categorias_financeiras_listar():
         .filter(db.func.extract("year", data_ref_lancamento) == ano)
         .group_by(LancamentoFinanceiro.tipo, LancamentoFinanceiro.categoria)
     )
+    if mes:
+        totais_query = totais_query.filter(db.func.extract("month", data_ref_lancamento) == mes)
     totais = {(tipo, nome): (valor, qtd) for tipo, nome, valor, qtd in totais_query}
 
     for categoria in categorias:
@@ -424,8 +427,19 @@ def categorias_financeiras_listar():
         categoria.qtd_lancamentos = qtd_lancamentos
         grupos[(categoria.tipo, categoria.natureza)].append(categoria)
 
+    meses_disponiveis = [
+        (1, "Janeiro"), (2, "Fevereiro"), (3, "Março"), (4, "Abril"),
+        (5, "Maio"), (6, "Junho"), (7, "Julho"), (8, "Agosto"),
+        (9, "Setembro"), (10, "Outubro"), (11, "Novembro"), (12, "Dezembro"),
+    ]
+
     return render_template(
-        "categorias_financeiras/list.html", grupos=grupos, ano=ano, anos_disponiveis=_anos_disponiveis()
+        "categorias_financeiras/list.html",
+        grupos=grupos,
+        ano=ano,
+        mes=mes,
+        anos_disponiveis=_anos_disponiveis(),
+        meses_disponiveis=meses_disponiveis,
     )
 
 

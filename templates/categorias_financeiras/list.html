@@ -46,10 +46,17 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <p class="text-sm text-gray-500">
       Edite, inclua ou remova categorias para personalizar os lançamentos de receitas e despesas.
-      Os valores ao lado de cada categoria são o total lançado no ano selecionado.
+      Os valores ao lado de cada categoria são o total lançado no mês e ano selecionados.
     </p>
     <div class="flex items-center gap-2 no-print">
-      <form method="GET">
+      <form method="GET" class="flex items-center gap-2">
+        <select name="mes" onchange="this.form.submit()"
+                class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+          <option value="0" {% if mes == 0 %}selected{% endif %}>Ano todo</option>
+          {% for m, nome_mes in meses_disponiveis %}
+          <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ nome_mes }}</option>
+          {% endfor %}
+        </select>
         <select name="ano" onchange="this.form.submit()"
                 class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
           {% for a in anos_disponiveis %}
