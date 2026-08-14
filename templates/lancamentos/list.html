@@ -19,11 +19,14 @@
       <option value="fixa" {% if request.args.get('natureza') == 'fixa' %}selected{% endif %}>Fixa</option>
       <option value="variavel" {% if request.args.get('natureza') == 'variavel' %}selected{% endif %}>Variável</option>
     </select>
+    <input type="month" name="mes" value="{{ mes_selecionado }}"
+           class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
     <input type="date" name="data_inicio" value="{{ request.args.get('data_inicio', '') }}"
            class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
     <input type="date" name="data_fim" value="{{ request.args.get('data_fim', '') }}"
            class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
     <button type="submit" class="rounded-lg bg-gray-200 hover:bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Filtrar</button>
+    <a href="{{ url_for('lancamentos_listar') }}" class="text-xs text-gray-500 hover:text-zera-600 underline">Limpar filtros</a>
     <div class="ml-auto flex items-center gap-2">
       {% include "_relatorio_toolbar.html" %}
       <a href="{{ url_for('lancamentos_novo') }}"

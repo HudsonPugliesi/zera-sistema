@@ -1,3 +1,4 @@
+import calendar
 import csv
 import io
 import os
@@ -311,6 +312,11 @@ def lancamentos_listar():
     natureza = request.args.get("natureza", "").strip()
     data_inicio = request.args.get("data_inicio", "")
     data_fim = request.args.get("data_fim", "")
+    mes = request.args.get("mes", "").strip()
+
+    # Sem nenhum filtro informado (primeiro acesso à página): mostra o mês atual por padrão.
+    if not any([q, tipo, natureza, data_inicio, data_fim, mes]):
+        mes = datetime.now().strftime("%Y-%m")
 
     query = LancamentoFinanceiro.query
     if q:
@@ -320,13 +326,24 @@ def lancamentos_listar():
         query = query.filter(LancamentoFinanceiro.tipo == tipo)
     if natureza:
         query = query.filter(LancamentoFinanceiro.natureza == natureza)
+    if mes:
+        try:
+            ano_mes, mes_mes = (int(parte) for parte in mes.split("-"))
+            primeiro_dia = datetime(ano_mes, mes_mes, 1).date()
+            ultimo_dia = datetime(ano_mes, mes_mes, calendar.monthrange(ano_mes, mes_mes)[1]).date()
+            query = query.filter(
+                LancamentoFinanceiro.data_vencimento >= primeiro_dia,
+                LancamentoFinanceiro.data_vencimento <= ultimo_dia,
+            )
+        except ValueError:
+            mes = ""
     if data_inicio:
         query = query.filter(LancamentoFinanceiro.data_vencimento >= parse_date(data_inicio))
     if data_fim:
         query = query.filter(LancamentoFinanceiro.data_vencimento <= parse_date(data_fim))
 
     lancamentos, pagination = paginar_ou_todos(query, LancamentoFinanceiro.data_vencimento.desc())
-    return render_template("lancamentos/list.html", lancamentos=lancamentos, pagination=pagination)
+    return render_template("lancamentos/list.html", lancamentos=lancamentos, pagination=pagination, mes_selecionado=mes)
 
 
 @app.route("/financeiro/lancamentos/novo", methods=["GET", "POST"])
