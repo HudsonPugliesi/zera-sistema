@@ -313,37 +313,86 @@ def lancamentos_listar():
     data_inicio = request.args.get("data_inicio", "")
     data_fim = request.args.get("data_fim", "")
     mes = request.args.get("mes", "").strip()
+    status = request.args.get("status", "").strip()
 
     # Sem nenhum filtro informado (primeiro acesso à página): mostra o mês atual por padrão.
-    if not any([q, tipo, natureza, data_inicio, data_fim, mes]):
+    if not any([q, tipo, natureza, data_inicio, data_fim, mes, status]):
         mes = datetime.now().strftime("%Y-%m")
 
-    query = LancamentoFinanceiro.query
+    # Filtros de busca/período: aplicados tanto na listagem quanto nos totais por status,
+    # para que os cartões de soma reflitam o mesmo recorte (mês, tipo etc.) da tela.
+    base_query = LancamentoFinanceiro.query
     if q:
         like = f"%{q}%"
-        query = query.filter(db.or_(LancamentoFinanceiro.categoria.ilike(like), LancamentoFinanceiro.descricao.ilike(like)))
+        base_query = base_query.filter(db.or_(LancamentoFinanceiro.categoria.ilike(like), LancamentoFinanceiro.descricao.ilike(like)))
     if tipo:
-        query = query.filter(LancamentoFinanceiro.tipo == tipo)
+        base_query = base_query.filter(LancamentoFinanceiro.tipo == tipo)
     if natureza:
-        query = query.filter(LancamentoFinanceiro.natureza == natureza)
+        base_query = base_query.filter(LancamentoFinanceiro.natureza == natureza)
     if mes:
         try:
             ano_mes, mes_mes = (int(parte) for parte in mes.split("-"))
             primeiro_dia = datetime(ano_mes, mes_mes, 1).date()
             ultimo_dia = datetime(ano_mes, mes_mes, calendar.monthrange(ano_mes, mes_mes)[1]).date()
-            query = query.filter(
+            base_query = base_query.filter(
                 LancamentoFinanceiro.data_vencimento >= primeiro_dia,
                 LancamentoFinanceiro.data_vencimento <= ultimo_dia,
             )
         except ValueError:
             mes = ""
     if data_inicio:
-        query = query.filter(LancamentoFinanceiro.data_vencimento >= parse_date(data_inicio))
+        base_query = base_query.filter(LancamentoFinanceiro.data_vencimento >= parse_date(data_inicio))
     if data_fim:
-        query = query.filter(LancamentoFinanceiro.data_vencimento <= parse_date(data_fim))
+        base_query = base_query.filter(LancamentoFinanceiro.data_vencimento <= parse_date(data_fim))
 
-    lancamentos, pagination = paginar_ou_todos(query, LancamentoFinanceiro.data_vencimento.desc())
-    return render_template("lancamentos/list.html", lancamentos=lancamentos, pagination=pagination, mes_selecionado=mes)
+    hoje = datetime.now().date()
+
+    def soma(*filtros):
+        return base_query.filter(*filtros).with_entities(db.func.coalesce(db.func.sum(LancamentoFinanceiro.valor), 0)).scalar()
+
+    totais_status = {
+        "pendente": soma(LancamentoFinanceiro.data_pagamento.is_(None)),
+        "atrasado": soma(
+            LancamentoFinanceiro.data_pagamento.is_(None),
+            LancamentoFinanceiro.data_vencimento < hoje,
+        ),
+        "a_vencer": soma(
+            LancamentoFinanceiro.data_pagamento.is_(None),
+            LancamentoFinanceiro.data_vencimento >= hoje,
+            LancamentoFinanceiro.data_vencimento <= hoje + timedelta(days=7),
+        ),
+        "pago": soma(LancamentoFinanceiro.data_pagamento.isnot(None)),
+    }
+
+    query = base_query
+    if status == "pendente":
+        query = query.filter(LancamentoFinanceiro.data_pagamento.is_(None))
+    elif status == "atrasado":
+        query = query.filter(
+            LancamentoFinanceiro.data_pagamento.is_(None),
+            LancamentoFinanceiro.data_vencimento < hoje,
+        )
+    elif status == "a_vencer":
+        query = query.filter(
+            LancamentoFinanceiro.data_pagamento.is_(None),
+            LancamentoFinanceiro.data_vencimento >= hoje,
+            LancamentoFinanceiro.data_vencimento <= hoje + timedelta(days=7),
+        )
+    elif status == "pago":
+        query = query.filter(LancamentoFinanceiro.data_pagamento.isnot(None))
+
+    # Nos filtros de pendências, mostra primeiro quem vence/venceu há mais tempo (mais urgente).
+    ordenacao = LancamentoFinanceiro.data_vencimento.asc() if status in ("pendente", "atrasado", "a_vencer") \
+        else LancamentoFinanceiro.data_vencimento.desc()
+    lancamentos, pagination = paginar_ou_todos(query, ordenacao)
+    return render_template(
+        "lancamentos/list.html",
+        lancamentos=lancamentos,
+        pagination=pagination,
+        mes_selecionado=mes,
+        status_selecionado=status,
+        totais_status=totais_status,
+    )
 
 
 @app.route("/financeiro/lancamentos/novo", methods=["GET", "POST"])

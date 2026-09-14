@@ -288,6 +288,18 @@ class LancamentoFinanceiro(RastreioMixin, db.Model):
     def data_referencia(self):
         return self.data_pagamento or self.data_vencimento
 
+    @property
+    def situacao_prazo(self):
+        """Texto amigável com os dias de atraso ou dias restantes até o vencimento."""
+        if self.data_pagamento:
+            return None
+        dias = (self.data_vencimento - date.today()).days
+        if dias < 0:
+            return f"{abs(dias)} dia{'s' if abs(dias) != 1 else ''} em atraso"
+        if dias == 0:
+            return "Vence hoje"
+        return f"Vence em {dias} dia{'s' if dias != 1 else ''}"
+
 
 class Auditoria(db.Model):
     __tablename__ = "auditoria"
