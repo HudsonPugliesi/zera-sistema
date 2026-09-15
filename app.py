@@ -310,13 +310,14 @@ def lancamentos_listar():
     q = request.args.get("q", "").strip()
     tipo = request.args.get("tipo", "").strip()
     natureza = request.args.get("natureza", "").strip()
+    categoria = request.args.get("categoria", "").strip()
     data_inicio = request.args.get("data_inicio", "")
     data_fim = request.args.get("data_fim", "")
     mes = request.args.get("mes", "").strip()
     status = request.args.get("status", "").strip()
 
     # Sem nenhum filtro informado (primeiro acesso à página): mostra o mês atual por padrão.
-    if not any([q, tipo, natureza, data_inicio, data_fim, mes, status]):
+    if not any([q, tipo, natureza, categoria, data_inicio, data_fim, mes, status]):
         mes = datetime.now().strftime("%Y-%m")
 
     # Filtros de busca/período: aplicados tanto na listagem quanto nos totais por status,
@@ -329,6 +330,8 @@ def lancamentos_listar():
         base_query = base_query.filter(LancamentoFinanceiro.tipo == tipo)
     if natureza:
         base_query = base_query.filter(LancamentoFinanceiro.natureza == natureza)
+    if categoria:
+        base_query = base_query.filter(LancamentoFinanceiro.categoria == categoria)
     if mes:
         try:
             ano_mes, mes_mes = (int(parte) for parte in mes.split("-"))
@@ -385,12 +388,18 @@ def lancamentos_listar():
     ordenacao = LancamentoFinanceiro.data_vencimento.asc() if status in ("pendente", "atrasado", "a_vencer") \
         else LancamentoFinanceiro.data_vencimento.desc()
     lancamentos, pagination = paginar_ou_todos(query, ordenacao)
+    categorias_disponiveis = [
+        nome for (nome,) in
+        db.session.query(CategoriaFinanceira.nome).distinct().order_by(CategoriaFinanceira.nome).all()
+    ]
     return render_template(
         "lancamentos/list.html",
         lancamentos=lancamentos,
         pagination=pagination,
         mes_selecionado=mes,
         status_selecionado=status,
+        categoria_selecionada=categoria,
+        categorias_disponiveis=categorias_disponiveis,
         totais_status=totais_status,
     )
 

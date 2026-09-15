@@ -19,6 +19,12 @@
       <option value="fixa" {% if request.args.get('natureza') == 'fixa' %}selected{% endif %}>Fixa</option>
       <option value="variavel" {% if request.args.get('natureza') == 'variavel' %}selected{% endif %}>Variável</option>
     </select>
+    <select name="categoria" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
+      <option value="">Todas as categorias</option>
+      {% for nome in categorias_disponiveis %}
+      <option value="{{ nome }}" {% if categoria_selecionada == nome %}selected{% endif %}>{{ nome }}</option>
+      {% endfor %}
+    </select>
     <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zera-500">
       <option value="">Todos os status</option>
       <option value="pendente" {% if status_selecionado == 'pendente' %}selected{% endif %}>Pendentes (todos)</option>
