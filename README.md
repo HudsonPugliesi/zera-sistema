@@ -29,9 +29,9 @@ Abra <http://127.0.0.1:5000> no navegador. Na primeira execução o banco
 gerado:
 
 - **Usuário:** `admin`
-- **Senha:** `admin123`
-
-Troque essa senha em Usuários assim que possível.
+- **Senha:** a definida em `ADMIN_PASSWORD` (veja `.env.example`). Se a
+  variável não existir, uma senha aleatória é exibida no terminal na
+  primeira execução.
 
 Para aprender a usar cada tela do sistema (financeiro, estoque,
 patrimônio, alunos, usuários etc.), veja o [Manual do Sistema](MANUAL.md).
@@ -40,9 +40,14 @@ patrimônio, alunos, usuários etc.), veja o [Manual do Sistema](MANUAL.md).
 
 O projeto já inclui `vercel.json` para deploy direto (basta importar o
 repositório na Vercel). **Atenção:** a Vercel roda o Flask como função
-serverless com sistema de arquivos somente leitura — o banco SQLite é
-gravado em `/tmp`, que **não é persistente**: os dados cadastrados podem
-ser perdidos a qualquer redeploy, cold start ou nova instância. Isso serve
-para demonstrar a interface, não para uso real da escola. Para uso real,
-migre para um banco externo (Postgres) e ajuste `SQLALCHEMY_DATABASE_URI`
-em `app.py`.
+serverless com sistema de arquivos somente leitura; o SQLite em `/tmp`
+**não é persistente**. Por isso, na Vercel o app **não sobe** sem estas
+variáveis (Settings > Environment Variables > Production):
+
+- `DATABASE_URL`: Postgres (Neon / Vercel Postgres). Para levar os dados do
+  SQLite local, rode `python migrate_to_postgres.py`.
+- `SECRET_KEY`: chave fixa das sessões.
+- `ADMIN_PASSWORD`: senha inicial do `admin` (só vale se o banco estiver vazio).
+
+Como o esquema não é criado automaticamente com `DATABASE_URL`, rode o
+`migrate_to_postgres.py` (ele cria as tabelas) antes do primeiro acesso.

@@ -56,6 +56,14 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # DATABASE_URL configurada perde os dados a cada novo deploy/cold start.
 _database_url = os.environ.get("DATABASE_URL")
 _engine_options = {}
+_em_vercel = bool(os.environ.get("VERCEL"))
+if _em_vercel and not _database_url:
+    # Sem banco externo o SQLite iria para /tmp e seria apagado a cada cold
+    # start. Melhor falhar no boot, com mensagem clara, do que "zerar" em silêncio.
+    raise RuntimeError(
+        "DATABASE_URL não definida. Na Vercel é obrigatório configurar um Postgres "
+        "(Settings > Environment Variables > Production); o SQLite em /tmp perde os dados."
+    )
 if _database_url:
     DB_URI, _engine_options = normalizar_postgres_url(_database_url)
 else:
@@ -63,9 +71,14 @@ else:
     DB_URI = "sqlite:///" + DB_PATH
 
 app = Flask(__name__, template_folder="templates")
-# SECRET_KEY vem do arquivo .env (fora do código-fonte). Se não estiver
-# definida, gera uma chave temporária só para a sessão atual do processo.
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+# SECRET_KEY vem do arquivo .env (fora do código-fonte). Em produção ela é
+# obrigatória: uma chave aleatória por processo invalidaria as sessões a cada
+# cold start e divergiria entre instâncias serverless. Em dev local, gera uma
+# chave temporária só para a sessão atual do processo.
+_secret_key = os.environ.get("SECRET_KEY")
+if _em_vercel and not _secret_key:
+    raise RuntimeError("SECRET_KEY não definida. Configure-a nas variáveis de ambiente da Vercel.")
+app.config["SECRET_KEY"] = _secret_key or secrets.token_hex(32)
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_URI
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = _engine_options
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -1532,8 +1545,14 @@ def auditoria_exportar():
 
 def seed_admin():
     if Usuario.query.count() == 0:
+        # A senha vem de ADMIN_PASSWORD. Sem ela (dev local), gera uma senha
+        # aleatória e mostra no terminal, em vez de usar uma senha fixa conhecida.
+        senha = os.environ.get("ADMIN_PASSWORD")
+        if not senha:
+            senha = secrets.token_urlsafe(12)
+            print(f"[seed_admin] Usuário 'admin' criado com senha temporária: {senha}")
         admin = Usuario(nome="Administrador", login="admin", email="admin@zera.local", perfil="admin", status="ativo")
-        admin.set_senha("admin123")
+        admin.set_senha(senha)
         db.session.add(admin)
         db.session.commit()
 

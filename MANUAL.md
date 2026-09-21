@@ -35,9 +35,9 @@ Abra o endereço do sistema no navegador — você cai direto na tela de
 Usuário administrador criado na primeira execução:
 
 - **Usuário:** `admin`
-- **Senha:** `admin123`
+- **Senha:** definida pelo administrador do sistema (variável `ADMIN_PASSWORD`).
 
-> Troque essa senha assim que possível em **Usuários** (seção 16).
+> Se o seu banco veio de uma versão antiga, troque a senha `admin123` em **Usuários** (seção 16).
 
 Ao sair, use **🚪 Sair** no rodapé do menu lateral.
 
