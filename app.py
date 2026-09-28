@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from flask import Flask, Response, flash, redirect, render_template, request, url_for
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from flask_wtf import CSRFProtect
+from sqlalchemy import text
 
 from db_url import normalizar_postgres_url
 from models import (
@@ -1311,6 +1312,21 @@ def alunos_excluir(id):
     db.session.commit()
     registrar_auditoria("exclusao", "alunos", f"Aluno {nome} excluído")
     flash("Aluno excluído.", "success")
+    return redirect(url_for("alunos_listar"))
+
+
+@app.route("/admin/migrar-valor-mensalidade")
+@admin_required
+def admin_migrar_valor_mensalidade():
+    """Rota temporária: adiciona a coluna valor_mensalidade em alunos no
+    Postgres de produção, usando a DATABASE_URL que só o runtime enxerga
+    (variável marcada como Sensitive na Vercel — não pode ser lida fora
+    da aplicação). Remover após rodar uma vez."""
+    db.session.execute(text(
+        'ALTER TABLE "alunos" ADD COLUMN IF NOT EXISTS "valor_mensalidade" FLOAT DEFAULT 0'
+    ))
+    db.session.commit()
+    flash("Coluna valor_mensalidade verificada/criada com sucesso.", "success")
     return redirect(url_for("alunos_listar"))
 
 
