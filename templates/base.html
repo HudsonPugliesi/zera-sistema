@@ -69,11 +69,10 @@
 
   <!-- Sidebar -->
   <aside class="zs-side hidden md:flex md:flex-col w-64 shrink-0 sticky top-0 h-screen">
-    <div class="flex items-center gap-3 px-6 py-5">
-      <svg class="zs-logo" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="20" cy="20" r="17"/><circle cx="20" cy="20" r="9"/><path d="M20 11v18M11 20h18"/></svg>
-      <div class="zs-brand">Zera<small>Christian School</small></div>
+    <div class="flex items-center justify-center px-6 pt-8 pb-6">
+      <img src="{{ url_for('static', filename='img/zera-selo.png') }}" alt="Zéra Christian School" class="h-16 w-auto">
     </div>
-    <nav class="flex-1 overflow-y-auto px-3 pb-4">
+    <nav class="flex-1 overflow-y-auto px-3 pt-2 pb-4">
       {% for item in nav %}
         {% if item[0] == 'sec' %}
           {% if not loop.first %}<div class="zs-sec">{{ item[1] }}</div>{% endif %}
