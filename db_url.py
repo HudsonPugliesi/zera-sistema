@@ -18,5 +18,9 @@ def normalizar_postgres_url(url):
         # na query string, então removemos e habilitamos SSL via connect_args.
         url = url.split("?")[0].replace("postgresql://", "postgresql+pg8000://", 1)
         engine_kwargs["connect_args"] = {"ssl_context": ssl.create_default_context()}
+        # Verifica a conexão antes de reusá-la (evita erro/retry silencioso
+        # quando a função serverless reaproveita um processo "morno" com uma
+        # conexão que o Neon já fechou por inatividade).
+        engine_kwargs["pool_pre_ping"] = True
 
     return url, engine_kwargs
