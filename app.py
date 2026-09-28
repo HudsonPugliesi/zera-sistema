@@ -1253,6 +1253,7 @@ def alunos_novo():
             responsavel_financeiro_telefone=request.form.get("responsavel_financeiro_telefone", "").strip(),
             responsavel_financeiro_email=request.form.get("responsavel_financeiro_email", "").strip(),
             data_matricula=parse_date(request.form.get("data_matricula")) or datetime.now().date(),
+            valor_mensalidade=float(request.form.get("valor_mensalidade") or 0),
             status=request.form.get("status", "ativo"),
             observacao=request.form.get("observacao", ""),
         )
@@ -1290,6 +1291,7 @@ def alunos_editar(id):
         aluno.responsavel_financeiro_telefone = request.form.get("responsavel_financeiro_telefone", "").strip()
         aluno.responsavel_financeiro_email = request.form.get("responsavel_financeiro_email", "").strip()
         aluno.data_matricula = parse_date(request.form.get("data_matricula"))
+        aluno.valor_mensalidade = float(request.form.get("valor_mensalidade") or 0)
         aluno.status = request.form.get("status", "ativo")
         aluno.observacao = request.form.get("observacao", "")
         marcar_atualizacao(aluno)

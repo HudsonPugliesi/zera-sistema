@@ -36,6 +36,7 @@
           <th class="px-5 py-3 font-medium">Turma</th>
           <th class="px-5 py-3 font-medium">Responsável</th>
           <th class="px-5 py-3 font-medium">Telefone</th>
+          <th class="px-5 py-3 font-medium text-right">Mensalidade</th>
           <th class="px-5 py-3 font-medium">Status</th>
           <th class="px-5 py-3 font-medium text-right no-print">Ações</th>
         </tr>
@@ -51,6 +52,7 @@
           <td class="px-5 py-3 text-gray-600">{{ aluno.turma }}</td>
           <td class="px-5 py-3 text-gray-600">{{ aluno.responsavel_nome }}</td>
           <td class="px-5 py-3 text-gray-600">{{ aluno.telefone }}</td>
+          <td class="px-5 py-3 text-right text-gray-600">{{ aluno.valor_mensalidade|brl }}</td>
           <td class="px-5 py-3">
             <span class="px-2 py-1 rounded-full text-xs font-medium {% if aluno.status == 'ativo' %}bg-green-100 text-green-700{% else %}bg-gray-200 text-gray-600{% endif %}">
               {{ aluno.status|capitalize }}
@@ -66,7 +68,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="px-5 py-8 text-center text-gray-400">Nenhum aluno cadastrado.</td></tr>
+        <tr><td colspan="8" class="px-5 py-8 text-center text-gray-400">Nenhum aluno cadastrado.</td></tr>
         {% endfor %}
       </tbody>
     </table>

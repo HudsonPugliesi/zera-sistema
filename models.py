@@ -231,6 +231,7 @@ class Aluno(RastreioMixin, db.Model):
     responsavel_financeiro_telefone = db.Column(db.String(30))
     responsavel_financeiro_email = db.Column(db.String(150))
     data_matricula = db.Column(db.Date, nullable=True)
+    valor_mensalidade = db.Column(db.Float, default=0)
     status = db.Column(db.String(20), nullable=False, default="ativo")
     observacao = db.Column(db.Text)
 
