@@ -50,7 +50,7 @@ main .bg-white.rounded-lg, main .bg-white.rounded-xl, main .bg-white.rounded-2xl
 /* Tabelas */
 table { border-collapse: separate; border-spacing: 0; }
 thead, thead tr, thead th { background: transparent !important; }
-thead th { color: var(--faint) !important; font-size: .68rem; text-transform: uppercase; letter-spacing: .09em; font-weight: 600; border-bottom: 1px solid var(--line); }
+thead th { color: var(--faint) !important; font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; font-weight: 600; border-bottom: 1px solid var(--line); }
 tbody tr { border-color: var(--line) !important; }
 tbody td { border-color: var(--line); }
 tbody tr:hover { background: rgba(255, 255, 255, .02); }
