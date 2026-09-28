@@ -8,3 +8,5 @@ venv/
 .env
 backups/
 node_modules/
+.vercel
+.env*
